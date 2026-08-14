@@ -1,0 +1,15 @@
+# Dependencias y artefactos de build
+node_modules/
+dist/
+.next/
+out/
+
+# Sistema operativo
+.DS_Store
+
+# Residuos de la escritura atómica de JSON (tmp + rename)
+*.tmp
+
+# NOTA DELIBERADA: /scraper/cache/geocode.json SÍ se versiona en git
+# (decisión #6 de docs/architecture.md: corridas reproducibles y respeto
+# real del límite de Nominatim). No agregar reglas que lo ignoren.

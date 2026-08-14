@@ -1,0 +1,605 @@
+{
+  "actualizado": "2026-08-13T10:00:32-05:00",
+  "sitios": [
+    {
+      "id": "arco-de-corferias-acopio-para-animales",
+      "nombre": "Arco de Corferias — acopio para animales",
+      "categorias": [
+        "mascotas"
+      ],
+      "descripcion": "Centro de acopio para ayudar a los animales afectados por el terremoto, campaña del Instituto Distrital de Protección y Bienestar Animal (IDPYBA), en el marco de la feria ExpoPet 2026. Se reciben alimento y elementos para mascotas, y medicamentos e insumos veterinarios. No es necesario ingresar al centro de eventos.",
+      "direccion": "carrera 37 # 24-67",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "10:00 a. m. a 6:00 p. m., en horario continuo, del jueves 13 al lunes 17 de agosto de 2026",
+      "contacto": {
+        "telefono": "",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/ambiente/corferias-sera-centro-de-acopio-ayuda-animales-afectados-terremoto",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "centro-comercial-unicentro",
+      "nombre": "Centro Comercial Unicentro",
+      "categorias": [
+        "alimentos",
+        "agua",
+        "ropa_abrigo",
+        "medicamentos",
+        "acopio_general"
+      ],
+      "descripcion": "Punto de acopio de donaciones y ayudas humanitarias para damnificados del terremoto, operado con la Cruz Roja Colombiana Seccional Bogotá. Se recibe: agua potable embotellada; cobijas, mantas y colchonetas; alimentos no perecederos; suministros de primeros auxilios; artículos de higiene personal.",
+      "direccion": "carrera 15 #124-30",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "8:00 a. m. a 9:00 p. m., lunes a domingo",
+      "contacto": {
+        "telefono": "",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/seguridad/puntos-de-donacion-en-bogota-para-damnificados-terremoto-en-colombia",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "clinica-colsanitas-s-a",
+      "nombre": "Clínica Colsanitas S.A.",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Calle 166 #22-68",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 589 5468 y 601 571 8610 / 315 338 4374",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "clinica-de-marly",
+      "nombre": "Clínica de Marly",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Calle 50 #9-67, piso 2",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 343 6600, ext. 1224, 2224y 2225",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "cruz-roja-colombiana-banco-nacional-de-sangre",
+      "nombre": "Cruz Roja Colombiana – Banco Nacional de Sangre",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Carrera 68 #68B-31",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 437 6334, ext. 6748 y 6713",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "cruz-roja-colombiana-donacion-de-sangre",
+      "nombre": "Cruz Roja Colombiana — donación de sangre",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Tras los sismos y las personas con afectaciones en salud, se hace llamado urgente a donación de sangre en los distintos puntos del país.",
+      "direccion": "Av. Carrera 68 # 68B-31",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "Cel: 3102172379",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://www.cruzrojacolombiana.org/cruz-roja-colombiana-despliega-capacidades-para-dar-respuesta-tras-las-afectaciones-por-sismo-en-colombia/",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "el-estadio-el-campin",
+      "nombre": "El estadio El Campín",
+      "categorias": [
+        "alimentos",
+        "agua",
+        "ropa_abrigo",
+        "medicamentos",
+        "acopio_general"
+      ],
+      "descripcion": "Punto de acopio de donaciones y ayudas humanitarias para damnificados del terremoto, operado con la Cruz Roja Colombiana Seccional Bogotá. Se recibe: agua potable embotellada; cobijas, mantas y colchonetas; alimentos no perecederos; suministros de primeros auxilios; artículos de higiene personal.",
+      "direccion": "avenida NQS o carrera 30 entre la calle 53B Bis y calle 57",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "8:00 a. m. a 9:00 p. m., lunes a domingo",
+      "contacto": {
+        "telefono": "",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/seguridad/puntos-de-donacion-en-bogota-para-damnificados-terremoto-en-colombia",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "fundacion-banco-nacional-de-sangre-hemolife",
+      "nombre": "Fundación Banco Nacional de Sangre HEMOLIFE",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Calle 23 #116-31",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 742 8124, ext. 101 y 123",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "fundacion-cardio-infantil-instituto-de-cardiologia",
+      "nombre": "Fundación Cardio Infantil – Instituto de Cardiología",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Carrera 13B #161-85, piso 2, Torre H",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 667 2727, ext. 7203, 72104 y 72106 / 317 367 5505 y 317 379 8034",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "fundacion-hematologica-colombia-fuheco",
+      "nombre": "Fundación Hematológica Colombia – FUHECO",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Carrera 65 # 81-67",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 746 7888, ext. 149 y 112",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "fundacion-hospital-de-la-misericordia-homi",
+      "nombre": "Fundación Hospital de la Misericordia (HOMI)",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Avenida Caracas #1-65, piso 2",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 328 2510, ext. 1230 y 1231",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "fundacion-hospital-infantil-universitario-de-san-jose",
+      "nombre": "Fundación Hospital Infantil Universitario de San José",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Carrera 52 #67A-71",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 437 7540, ext. 5033",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "fundacion-karl-landsteiner-in-memoriam-kalai",
+      "nombre": "Fundación Karl Landsteiner In Memoriam – Kalai",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Carrera 45A # 94-50",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 691 5541, ext. 105",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "hospital-central-de-la-policia-nacional",
+      "nombre": "Hospital Central de la Policía Nacional",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Carrera 59 #26-21, Centro Administrativo Nacional (CAN)",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 580 4401, ext. 2187 y 2188",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "hospital-militar-central",
+      "nombre": "Hospital Militar Central",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Transversal Tercera #49-02, tercer piso sur",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 348 6868, ext. 5375 y 5376 / 315 863 3770",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "hospital-universitario-clinica-san-rafael",
+      "nombre": "Hospital Universitario Clínica San Rafael",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Carrera Octava #17-44 Sur, piso 2",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 746 4714, ext. 2351 y 2354",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "hospital-universitario-de-la-samaritana-e-s-e",
+      "nombre": "Hospital Universitario de la Samaritana E.S.E.",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "carrera Octava #0-29 sur",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "6012 705 1111 y 601 407 7075",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "idcbis-banco-distrital-de-sangre",
+      "nombre": "IDCBIS – Banco Distrital de Sangre",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Carrera 32 #12-81, Edificio IDCBIS, piso 2",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 364 9620, ext. 9441 y 9726",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "instituto-nacional-de-cancerologia-e-s-e",
+      "nombre": "Instituto Nacional de Cancerología – E.S.E.",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Avenida Primera 1 #9-85",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 481 7000, ext. 5363 y 5362",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "palacio-de-los-deportes",
+      "nombre": "Palacio de los Deportes",
+      "categorias": [
+        "alimentos",
+        "agua",
+        "ropa_abrigo",
+        "medicamentos",
+        "acopio_general"
+      ],
+      "descripcion": "Centro de acopio habilitado por Bogotá en el Palacio de los Deportes; las donaciones se destinan a la atención de personas afectadas por el terremoto en poblaciones de Chocó. Se recibe: agua potable embotellada; cobijas, mantas y colchonetas; alimentos no perecederos; suministros de primeros auxilios; artículos de higiene personal.",
+      "direccion": "calle 63 #59A-06",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "8:00 a. m. a 8:00 p. m.",
+      "contacto": {
+        "telefono": "",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/seguridad/puntos-de-donacion-en-bogota-para-damnificados-terremoto-en-colombia",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "punto-de-acopio-cruz-roja-usaquen",
+      "nombre": "Punto de acopio Cruz Roja — Usaquén",
+      "categorias": [
+        "alimentos",
+        "agua",
+        "ropa_abrigo",
+        "medicamentos",
+        "acopio_general"
+      ],
+      "descripcion": "Punto de acopio de donaciones y ayudas humanitarias para damnificados del terremoto, operado con la Cruz Roja Colombiana Seccional Bogotá. Se recibe: agua potable embotellada; cobijas, mantas y colchonetas; alimentos no perecederos; suministros de primeros auxilios; artículos de higiene personal.",
+      "direccion": "Calle 161A #7F-55",
+      "ciudad": "Bogotá",
+      "localidad": "Usaquén",
+      "lat": null,
+      "lng": null,
+      "horario": "8:00 a. m. a 9:00 p. m., lunes a domingo",
+      "contacto": {
+        "telefono": "",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/seguridad/puntos-de-donacion-en-bogota-para-damnificados-terremoto-en-colombia",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "sede-administrativa-de-la-cruz-roja",
+      "nombre": "Sede administrativa de la Cruz Roja",
+      "categorias": [
+        "alimentos",
+        "agua",
+        "ropa_abrigo",
+        "medicamentos",
+        "acopio_general"
+      ],
+      "descripcion": "Punto de acopio de donaciones y ayudas humanitarias para damnificados del terremoto, operado con la Cruz Roja Colombiana Seccional Bogotá. Se recibe: agua potable embotellada; cobijas, mantas y colchonetas; alimentos no perecederos; suministros de primeros auxilios; artículos de higiene personal.",
+      "direccion": "carrera 24 #73-38",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "Las 24 horas",
+      "contacto": {
+        "telefono": "",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/seguridad/puntos-de-donacion-en-bogota-para-damnificados-terremoto-en-colombia",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "sociedad-de-cirugia-de-bogota-hospital-de-san-jose",
+      "nombre": "Sociedad de Cirugía de Bogotá – Hospital de San José",
+      "categorias": [
+        "sangre"
+      ],
+      "descripcion": "Banco de sangre habilitado para donación tras el terremoto. La fuente recomienda comunicarse antes de acudir para confirmar horarios, disponibilidad y condiciones para la donación.",
+      "direccion": "Calle Décima #18-75",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "",
+      "contacto": {
+        "telefono": "601 353 8000, ext. 458 y 471",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/salud/puntos-para-donar-sangre-en-bogota-para-atencion-terremoto-2026",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    },
+    {
+      "id": "universidad-jorge-tadeo-lozano",
+      "nombre": "Universidad Jorge Tadeo Lozano",
+      "categorias": [
+        "alimentos",
+        "agua",
+        "ropa_abrigo",
+        "medicamentos",
+        "acopio_general"
+      ],
+      "descripcion": "Punto de acopio de donaciones y ayudas humanitarias para damnificados del terremoto, operado con la Cruz Roja Colombiana Seccional Bogotá. Se recibe: agua potable embotellada; cobijas, mantas y colchonetas; alimentos no perecederos; suministros de primeros auxilios; artículos de higiene personal.",
+      "direccion": "carrera Cuarta #22-61",
+      "ciudad": "Bogotá",
+      "localidad": "",
+      "lat": null,
+      "lng": null,
+      "horario": "8:00 a. m. a 9:00 p. m., lunes a domingo",
+      "contacto": {
+        "telefono": "",
+        "web": "",
+        "instagram": ""
+      },
+      "fuente": "https://bogota.gov.co/mi-ciudad/seguridad/puntos-de-donacion-en-bogota-para-damnificados-terremoto-en-colombia",
+      "estado": "activo",
+      "verificado": true,
+      "manual": false,
+      "ultimaActualizacion": "2026-08-13T10:00:32-05:00"
+    }
+  ]
+}

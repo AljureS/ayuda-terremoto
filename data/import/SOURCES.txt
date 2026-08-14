@@ -1,0 +1,45 @@
+Procedencia de los CSV crudos — Google Sheet comunitario (Fase 0 / F2-2a descubrimiento)
+=========================================================================================
+
+Hoja:        https://docs.google.com/spreadsheets/d/106XcWaBgaxFG-Y8R14bTOq9E2igE9Zu3bVaU_g5jc6U/
+Descubierta: via /htmlview (7 gids únicos)
+Descarga:    2026-08-12 ~22:53 -05:00, con curl
+             User-Agent: MapaAyudaBogota/1.0 (contacto: saidsimon2@gmail.com)
+URL usada:   .../export?format=csv&gid=<gid>   (la URL directa del contrato funcionó;
+             no hizo falta el fallback gviz)
+Delay:       2 s entre requests al mismo dominio (ética del proyecto)
+
+Archivo                                        gid         Pestaña (nombre en la hoja)          Registros de datos
+---------------------------------------------- ----------- ------------------------------------ ------------------
+sheet-gid-1375250837-dinero.csv                1375250837  Dinero                               62 filas = 46 organizaciones (16 filas de continuación con 1a col vacía)
+sheet-gid-140042907-especie.csv                140042907   Especie (comida, agua, etc.)         116 puntos (+20 filas-sección de región)
+sheet-gid-136153026-sangre.csv                 136153026   Sangre                               24 puntos (+7 filas-sección)
+sheet-gid-887290939-voluntariados.csv          887290939   Voluntariados (oportunidades)        21 registros (+5 filas-sección)
+sheet-gid-1512882424-salud-mental.csv          1512882424  Salud Mental (recursos)              5 recursos virtuales
+sheet-gid-720541266-personas-desaparecidas.csv 720541266   Personas Desaparecidas (recursos)    2 recursos virtuales
+sheet-gid-1698408580-otros-recursos.csv        1698408580  Otros recursos                       6 links a agregadores
+
+Estructura común: cada pestaña tiene 2-5 filas de preámbulo (título + avisos) antes del
+header real. Las pestañas geográficas intercalan filas-sección con el departamento en
+MAYÚSCULAS (resto de columnas vacías).
+
+AVISO en el preámbulo de la hoja (12 ago): "Por ahora no se recibirán más propuestas de
+donaciones. Mañana (12 de agosto) se compartirá un nuevo formato." — la hoja puede ser
+reemplazada por un formato nuevo; re-verificar gids/columnas antes de cada re-importación.
+
+Estos CSV son datos crudos de entrada, sin convertir. La conversión a /data/sitios.json
+solo ocurre con el mapeo aprobado (parada de contrato 2b, docs/PLAN_SCRAPPER.md).
+
+Actualización 2026-08-13 ~08:55 -05:00 — refresco automático por `npm run import:sheet` (F2-2c)
+------------------------------------------------------------------------------------------------
+El importador re-descargó las 4 pestañas aprobadas (export directo, mismo User-Agent,
+2 s entre requests) y sobreescribió los snapshots del mismo gid tras verificar que el
+encabezado completo sigue siendo el del mapeo aprobado en 2b (el "nuevo formato"
+anunciado para el 12-ago aún no aparece). Si algún día aparece, el importador NO
+convierte esa pestaña: conserva el snapshot local y reporta la discrepancia.
+Cambios vs 2026-08-12: Voluntariados 21 → 23 registros (+ "Mujeres por la Democracia",
+Bogotá; + "Alcaldía de Manizales" con fila-sección CALDAS nueva → 6 secciones).
+Especie (116), Sangre (24) y Dinero (62 filas / 46 organizaciones) sin cambios de
+conteo. Las 3 pestañas no aprobadas (salud mental, desaparecidos, otros recursos) no
+se re-descargan: conservan el snapshot de 2a.
+Primer /data/sitios.json real escrito por F2-2c: 205 sitios.

@@ -1,0 +1,22 @@
+{
+  // Node 20+ con módulos ESM ("type": "module" en package.json).
+  // tsx ejecuta los .ts directamente (no hay build); este tsconfig gobierna
+  // el chequeo de tipos del editor y un futuro `tsc --noEmit`.
+  // Convención NodeNext: los imports relativos llevan extensión .js
+  // (apuntan al .ts en tiempo de desarrollo).
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["src"]
+}

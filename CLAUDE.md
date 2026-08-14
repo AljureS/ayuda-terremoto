@@ -40,10 +40,10 @@ Skills de referencia (guías instaladas de terceros, no rituales): `frontend-des
 
 ## Orden de trabajo (estado)
 
-1. ☐ Scaffolding monorepo + schema + validación zod
-2. ☐ Fase 0: importar Google Sheet → primer `sitios.json` real (mostrar mapeo de columnas **antes** de convertir)
+1. ☑ Scaffolding monorepo + schema + validación zod (F1 de `docs/PLAN_SCRAPPER.md` — hecho)
+2. ☑ Fase 0: importar Google Sheet → primer `sitios.json` real (205 sitios; mapeo aprobado el 2026-08-12)
 3. ☐ Web funcional: mapa, lista, filtros, geolocalización y distancia
-4. ☐ Scraper de fuentes oficiales + pipeline completo de merge
-5. ☐ README + checklist de deploy en Vercel
+4. ☑ Scraper de fuentes oficiales + pipeline completo de merge (`npm run build:data` operativo; F4–F5 de `docs/PLAN_SCRAPPER.md`)
+5. ◐ README raíz con runbook del scraper listo y probado; el checklist de deploy en Vercel llega con la fase web (`docs/PLAN_WEB.md`)
 
 Regla del flujo: tras cualquier cambio de datos corre `/validate-data`; antes de cada deploy corre `/ship-check` (incluye la verificación de privacidad).

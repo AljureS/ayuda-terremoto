@@ -6,6 +6,8 @@ Plan ejecutable fase por fase hasta que el pipeline de datos completo (`npm run 
 
 Principios que gobiernan todo (de `docs/MASTER_PROMPT.md`): regla de oro (el scraper jamás importa de `/web`; solo se comunican por `sitios.json`) · ética de scraping innegociable · `manual: true` intocable · zod antes de cada escritura · ids estables · simplicidad sobre sofisticación.
 
+**Requisito de operabilidad (duro):** la persona mantenedora debe poder correr el scraper **sola, sin Claude**, para actualizar la página cuando haga falta. El ciclo completo son comandos simples y documentados: `cd scraper && npm run build:data` → revisar el diff → `git push` (Vercel redeploya solo). Cada fase entrega sus comandos como scripts npm con nombres del contrato; ningún paso puede depender de herramientas no documentadas. F6 no cierra hasta que el README deje este ciclo probado paso a paso.
+
 ## Separación de carpetas (estructura objetivo — innegociable)
 
 ```
@@ -20,12 +22,14 @@ Reglas de la separación: ningún import cruzado entre `/scraper` y `/web`, jam�
 
 ## Estado
 
-- [ ] F1 — Cimientos: scaffolding + schema + validación
-- [ ] F2 — Fase 0: importación del Google Sheet (2a descubrimiento · 2b aprobación del mapeo · 2c conversión)
-- [ ] F3 — Geocodificación con Nominatim
-- [ ] F4 — Scrapers de fuentes oficiales (4a recon · 4b implementación)
-- [ ] F5 — Dedupe + merge + pipeline completo
-- [ ] F6 — Auditoría de ética + documentación del scraper → **scraper EN FUNCIONAMIENTO**
+- [x] F1 — Cimientos: scaffolding + schema + validación — gate ✅ (`npm run validate` en verde, 2026-08-12)
+- [x] F2 — Fase 0: importación del Google Sheet — gate ✅ (205 sitios, `validate` verde, `import:sheet` idempotente; 2026-08-13)
+- [x] F3 — Geocodificación con Nominatim — gate ✅ (21 exactos escritos, 0 fuera de bbox, caché versionada, idempotente; 133 para ubicar a mano → `docs/UBICAR_A_MANO.md`; 2026-08-13)
+- [x] F4 — Scrapers de fuentes oficiales — gate ✅ (4a recon → `docs/RECON_FUENTES.md` · 4b: 24 registros oficiales en staging `scraper/cache/scraped.json`, fallo-explícito probado 10/10, ética verificada; 2026-08-13)
+- [x] F5 — Dedupe + merge + pipeline completo — gate ✅ (204 sitios tras 19 fusiones + 3 netos del hub; `build:data` end-to-end, idempotente byte a byte, invariante `manual:true` probado en 5 casos; 2026-08-13)
+- [x] F6 — Auditoría de ética + documentación del scraper — gate ✅ (auditoría **GO** sin hallazgos críticos/altos, fix de Crawl-delay aplicado y verificado, README raíz con runbook probado en vivo; 2026-08-13) → **✅ SCRAPER EN FUNCIONAMIENTO**
+
+**PLAN COMPLETADO (2026-08-13).** El ciclo del mantenedor quedó operativo sin Claude: `cd scraper && npm run build:data` → revisar reporte y diff → resolver lo señalado → commit + push. Pendiente humano: commit inicial del repo, `docs/UBICAR_A_MANO.md` (133 sitios), 5 candidatos a duplicado y 7 sitios con fechas de cierre en el texto. Siguiente etapa: `docs/PLAN_WEB.md`.
 
 ## F1 — Cimientos
 
@@ -63,7 +67,7 @@ Entregables: dedupe (nombre normalizado igual **o** < 100 m con categoría comú
 
 ## F6 — Auditoría y cierre
 
-**Responsables:** `privacy-auditor` (ética: robots.txt, delays, UA, Nominatim, `fuente`, manuales intactos) y `docs-ops` (sección scraper del README con comandos **probados** + runbook diario). **Gate:** veredicto GO del auditor → el scraper queda EN FUNCIONAMIENTO y el terreno listo para `docs/PLAN_WEB.md`.
+**Responsables:** `privacy-auditor` (ética: robots.txt, delays, UA, Nominatim, `fuente`, manuales intactos) y `docs-ops` (sección scraper del README con comandos **probados** + runbook diario). **Gate:** veredicto GO del auditor **y** la persona mantenedora puede ejecutar el ciclo completo sola siguiendo el README (build:data → diff → push) → el scraper queda EN FUNCIONAMIENTO y el terreno listo para `docs/PLAN_WEB.md`.
 
 ## Mecánica del loop
 
