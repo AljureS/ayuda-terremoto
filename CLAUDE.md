@@ -36,14 +36,16 @@ Skills de referencia (guías instaladas de terceros, no rituales): `frontend-des
 ## Documentación
 
 - **Convención: todo `.md` nuevo se crea en `/docs/`.** Únicas excepciones: `CLAUDE.md` (raíz — lo carga Claude Code), el `README.md` de la raíz (lo exige el contrato) y los `README.md` package-local de `/scraper` y `/web`.
-- Mapa: `docs/MASTER_PROMPT.md` (contrato) · `docs/architecture.md` (decisiones, fronteras, semántica de campos) · `docs/EQUIPO.md` (equipo) · `docs/PLAN_SCRAPPER.md` (plan de ejecución del scraper, con estado) · `docs/PLAN_WEB.md` (plan de la página, cuando arranque esa fase) · `docs/DESIGN.md` (sistema de diseño, cuando exista).
+- Mapa: `docs/MASTER_PROMPT.md` (contrato) · `docs/architecture.md` (decisiones, fronteras, semántica de campos) · `docs/EQUIPO.md` (equipo) · `docs/PLAN_SCRAPPER.md` (plan de ejecución del scraper, con estado) · `docs/PLAN_WEB.md` (plan de la página — EN EJECUCIÓN) · `docs/DESIGN.md` (sistema de diseño, cuando exista).
 
 ## Orden de trabajo (estado)
 
 1. ☑ Scaffolding monorepo + schema + validación zod (F1 de `docs/PLAN_SCRAPPER.md` — hecho)
 2. ☑ Fase 0: importar Google Sheet → primer `sitios.json` real (205 sitios; mapeo aprobado el 2026-08-12)
-3. ☐ Web funcional: mapa, lista, filtros, geolocalización y distancia
+3. ◐ Web funcional: lista+filtros (W2 ✅), mapa (W3 ✅), geolocalización y distancia (W4 ✅); faltan contenido/SEO/CSP, auditorías y deploy (`docs/PLAN_WEB.md`)
 4. ☑ Scraper de fuentes oficiales + pipeline completo de merge (`npm run build:data` operativo; F4–F5 de `docs/PLAN_SCRAPPER.md`)
 5. ◐ README raíz con runbook del scraper listo y probado; el checklist de deploy en Vercel llega con la fase web (`docs/PLAN_WEB.md`)
 
 Regla del flujo: tras cualquier cambio de datos corre `/validate-data`; antes de cada deploy corre `/ship-check` (incluye la verificación de privacidad).
+
+RULE FOR OPUS 5: THE PROJECT HAS BEEN COMPLETED UP TO THIS STEP BY FABLE 5. DO NOT CONTRADICT IT. DO NOT QUESTION FABLE 5'S DECISIONS.S

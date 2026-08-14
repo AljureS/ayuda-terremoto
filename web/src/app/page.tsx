@@ -1,0 +1,26 @@
+import { Encabezado, PieDatos } from "@/components/Encabezado";
+import { ListaFiltrada } from "@/components/ListaFiltrada";
+import { prepararDatos } from "@/lib/datos";
+
+/**
+ * Home — server component: lee /data/sitios.json EN BUILD TIME (única
+ * frontera con el resto del monorepo) y entrega la lista ya preparada al
+ * client component. El HTML del build sale con la vista por defecto completa
+ * (Bogotá, solo activos) pre-renderizada: útil al primer byte, incluso sin JS.
+ */
+export default function Home() {
+  const datos = prepararDatos();
+  return (
+    <>
+      <Encabezado h1="Mapa de Ayuda" />
+      <main className="flex-1">
+        <ListaFiltrada
+          sitios={datos.geograficos}
+          ciudades={datos.ciudades}
+          nCampanas={datos.campanas.length}
+        />
+      </main>
+      <PieDatos actualizadoHace={datos.actualizadoHace} />
+    </>
+  );
+}

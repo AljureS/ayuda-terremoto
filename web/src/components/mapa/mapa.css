@@ -1,0 +1,101 @@
+/*
+ * Estilos del mapa (W3). Los importa únicamente Mapa.tsx, que solo entra por
+ * next/dynamic: este CSS viaja con el chunk del mapa, no en el CSS inicial.
+ * Los valores de color son referencias a los tokens de globals.css (@theme);
+ * los pocos literales (blanco del aro, sombra del marker) son spec verbatim
+ * de DESIGN.md §5.
+ */
+
+/* El mapa habla con la voz del sistema, no con la de Leaflet. */
+.leaflet-container {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5rem;
+  background: var(--color-fondo);
+}
+
+.leaflet-container a {
+  color: var(--color-accion);
+}
+
+/* ---- Markers divIcon (DESIGN.md §5) ------------------------------------ */
+
+/* Contenedor 44 × 44 (target táctil) con el círculo de 28 px centrado. */
+.mk-sitio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mk-circulo {
+  box-sizing: border-box;
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  /* Aro blanco de 2 px: halo que separa el marker de cualquier tile (§5). */
+  border: 2px solid var(--color-superficie);
+  border-radius: 9999px;
+  /* Sombra literal del spec §5. */
+  box-shadow: 0 1px 2px rgba(16, 24, 32, 0.3);
+}
+
+/* ---- Controles ---------------------------------------------------------- */
+
+/* Zoom con target táctil ≥ 44 px en pantallas táctiles (DESIGN.md §8). */
+.leaflet-touch .leaflet-bar a {
+  width: 2.75rem;
+  height: 2.75rem;
+  line-height: 2.75rem;
+  font-size: 22px;
+}
+
+/* Atribución OSM: obligatoria por licencia y legible (≥ 13 px, DESIGN §8). */
+.leaflet-container .leaflet-control-attribution {
+  font-size: 0.8125rem;
+  line-height: 1.125rem;
+  color: var(--color-secundario);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* ---- Popup -------------------------------------------------------------- */
+
+.leaflet-popup-content {
+  margin: 12px 16px;
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+/* Los márgenes verticales los pone el contenido (mt-*), no Leaflet. */
+.leaflet-popup-content p {
+  margin: 0;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  font-size: 22px;
+  line-height: 2.75rem;
+  color: var(--color-secundario);
+}
+
+/*
+ * Acción primaria del popup. Clase propia (no CLASE_BTN_PRIMARIO) porque
+ * `.leaflet-container a` (0,1,1) le ganaría el color a las utilidades de
+ * Tailwind (0,1,0); aquí se resuelve con más especificidad. El blanco del
+ * texto es el mismo del botón primario del sistema (blanco sobre `accion`,
+ * 6.75:1 — DESIGN §1).
+ */
+.leaflet-container a.mapa-como-llegar {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  background: var(--color-accion);
+  padding: 0 1rem;
+  font-weight: 500;
+  color: var(--color-superficie);
+}

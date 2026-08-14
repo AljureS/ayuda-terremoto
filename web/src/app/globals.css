@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/*
+ * Tokens del sistema de diseño — copiados de docs/DESIGN.md §9 (fuente de verdad).
+ * Regla dura: ningún hex inline en componentes; si falta un token, primero se
+ * agrega en DESIGN.md y después aquí.
+ */
+@theme {
+  /* núcleo */
+  --color-tinta: #1a2530;
+  --color-secundario: #43525f;
+  --color-fondo: #eff2f5;
+  --color-superficie: #ffffff;
+  --color-borde: #d4dbe1;
+  --color-accion: #0a5ca8;
+
+  /* estados: texto / tinte / punto */
+  --color-activo: #166b31;
+  --color-activo-tinte: #def2e2;
+  --color-activo-punto: #1e7a3c;
+  --color-lleno: #7a4f06;
+  --color-lleno-tinte: #fbeed0;
+  --color-lleno-punto: #b8860b;
+  --color-pausado: #49565f;
+  --color-pausado-tinte: #e8ebee;
+  --color-pausado-punto: #85929d;
+  --color-cerrado: #333e48;
+
+  /* categorías: sólido (badge-texto y marker) / tinte (badge-fondo) */
+  --color-cat-acopio: #3d5a76;
+  --color-cat-acopio-tinte: #e4ebf1;
+  --color-cat-alimentos: #b0490b;
+  --color-cat-alimentos-tinte: #fbebdd;
+  --color-cat-agua: #0a6e97;
+  --color-cat-agua-tinte: #dff0f8;
+  --color-cat-sangre: #a81e22;
+  --color-cat-sangre-tinte: #f9e5e4;
+  --color-cat-medicamentos: #0d7362;
+  --color-cat-medicamentos-tinte: #ddf1ec;
+  --color-cat-construccion: #7a4a21;
+  --color-cat-construccion-tinte: #f4e9de;
+  --color-cat-ropa: #6d3fa5;
+  --color-cat-ropa-tinte: #efe7f8;
+  --color-cat-voluntariado: #41499f;
+  --color-cat-voluntariado-tinte: #e7e9f8;
+  --color-cat-dinero: #59650e;
+  --color-cat-dinero-tinte: #eef1d8;
+  --color-cat-mascotas: #ac2166;
+  --color-cat-mascotas-tinte: #fae4ee;
+
+  /* tipografía — system stack: cero requests externos (arquitectura §3.10) */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+    sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Roboto Mono", "Cascadia Mono",
+    monospace;
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.125rem; /* 13/18 */
+  --text-sec: 0.9375rem;
+  --text-sec--line-height: 1.375rem; /* 15/22 */
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem; /* 16/24 */
+  --text-tarjeta: 1.125rem;
+  --text-tarjeta--line-height: 1.5rem; /* 18/24 */
+  --text-seccion: 1.375rem;
+  --text-seccion--line-height: 1.75rem; /* 22/28 */
+  --text-pagina: 1.75rem;
+  --text-pagina--line-height: 2.125rem; /* 28/34 */
+
+  /* espaciado y forma */
+  --spacing-tap: 2.75rem; /* 44 px — target táctil mínimo */
+  --spacing-barra: 3.5rem; /* 56 px — barra sticky */
+  --radius-tarjeta: 0.625rem; /* 10 px */
+  --radius-chip: 9999px;
+  --shadow-tarjeta: 0 1px 2px rgb(16 24 32 / 0.06);
+}
+
+body {
+  background-color: var(--color-fondo);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+/* Foco visible sobre cualquier fondo del sistema (DESIGN.md §8: anillo 2 px
+   `accion` + offset 2 px; razón de contraste 6.01–6.75 calculada). */
+:focus-visible {
+  outline: 2px solid var(--color-accion);
+  outline-offset: 2px;
+}
+
+/* Aparición del panel de mapa — la segunda (y última) micro-transición que
+   DESIGN.md §8 permite: 150 ms, solo opacity. */
+@keyframes panel-mapa {
+  from {
+    opacity: 0;
+  }
+}
+.panel-mapa-entrada {
+  animation: panel-mapa 150ms ease-out;
+}
+
+/* Flecha del riel de rumbo (W4): la rotación cambia cuando llega una posición
+   nueva; 120 ms la hacen legible en vez de un salto. Bajo
+   `prefers-reduced-motion` la regla de abajo la elimina y la flecha aparece
+   directamente en su ángulo final (nunca gira). */
+.riel-flecha {
+  transition: transform 120ms ease-out;
+}
+
+/* Las transiciones son prescindibles por diseño (DESIGN.md §8): bajo
+   `prefers-reduced-motion` se eliminan por completo. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
