@@ -22,7 +22,8 @@ Plan ejecutable fase por fase para `/web`: la página estática (Next.js App Rou
 - [x] W4 — Ubicación + distancia + privacidad UI — gate ✅ (riel de rumbo funcionando, trazado del flujo de coordenadas con barrido de aguja en runtime: DOM/URL/red/storage limpios; 4 fallos con microcopy, localStorage solo con opt-in, +2 KB → 111 KB; 2026-08-14)
 - [x] W5 — Contenido fijo + SEO/OG + headers CSP — gate ✅ (`/acerca` legible sin JS, og.png 1200×630/52 KB, metadata dentro de límites en las 3 rutas, CSP con 0 violaciones en 4 escenarios reales, delta de peso 0 KB; 2026-08-14)
 - [x] W6 — QA + auditoría de privacidad (doble GO) — gates ✅ (QA: Lighthouse móvil 100 perf en las 3 rutas, a11y 100 tras fix, 109 KB gz, matriz de 12 edge cases sin un crash · Privacidad: promesa verificada contra el build minificado; NO-GO inicial por la CSP que podía no llegar a producción → resuelto con `vercel.json` duplicado; 10 hallazgos corregidos; 2026-08-14)
-- [ ] W7 — Ship: docs de deploy + `/ship-check` → **página en producción**
+- [x] W7a — Ship-check local ✅ **GO** (datos válidos · build limpio · 0 recursos externos · headers en ambos `vercel.json` · metadata OG completa · Lighthouse móvil 99/100/100/100) + README con la guía de deploy. Commits `6f0e528` y `1136884`.
+- [ ] W7b — **Deploy real (te toca a ti):** crear el proyecto en Vercel con Root Directory `web`, fijar `SITIO_URL` con el dominio real, redeployar, y verificar con `curl -I` que los 4 headers llegaron. Pasos exactos en el `README.md` de la raíz.
 
 ## W1 — Sistema de diseño
 
