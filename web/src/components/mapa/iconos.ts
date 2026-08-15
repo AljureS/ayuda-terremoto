@@ -99,11 +99,18 @@ export function iconoSitio(categoria: Categoria, estado: Estado): DivIcon {
   const memo = cache.get(clave);
   if (memo) return memo;
 
-  // Estado ≠ activo en el mapa: marker desaturado a --color-pausado-punto
+  // Estado ≠ activo en el mapa: marker desaturado a --color-marker-inactivo
   // (#85929D, DESIGN.md §5); el popup muestra el chip de estado.
+  //
+  // TOKEN PROPIO desde W6/P4: este hex era `--color-pausado-punto`, un token
+  // que servía a la vez de punto del chip y de marker apagado — dos roles sin
+  // relación colgando del mismo nombre. Al pasar el punto a `currentColor` ese
+  // token desaparece; sin este renombre quedaría un var() inválido y el
+  // círculo se pintaría TRANSPARENTE (invalid-at-computed-value-time), no de
+  // otro color. El hex no cambia: lo verificado en W3 sigue en pie.
   const color = activo
     ? `var(${VAR_CATEGORIA[categoria]})`
-    : "var(--color-pausado-punto)";
+    : "var(--color-marker-inactivo)";
 
   const icono = divIcon({
     // className propio: evita el fondo blanco con borde del

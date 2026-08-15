@@ -38,10 +38,31 @@ export function TarjetaSitio({
     .filter(Boolean)
     .join(", ");
 
+  /**
+   * "LLAMAR" TOMA EL ESTILO PRIMARIO CUANDO QUEDA SOLA (DESIGN.md §3, W6/P5).
+   * Sin "Cómo llegar" —o sea en todo estado ≠ `activo`— llamar no es la
+   * segunda acción: es la única, y además la correcta para estos estados
+   * (confirmar antes de desplazarte con una caja). Ninguna tarjeta muestra su
+   * única acción en estilo secundario.
+   */
+  const llamarEsUnica = !sitio.comoLlegar;
+
   return (
     <article className="rounded-tarjeta border border-borde bg-superficie p-4 shadow-tarjeta">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="break-words text-tarjeta font-semibold">{sitio.nombre}</h3>
+        {/*
+         * `min-w-0` es obligatorio, no cosmético (fix W6/P3): como flex item, el
+         * h3 hereda `min-width: auto`, o sea "no me encojas por debajo de mi
+         * palabra más larga". `break-words` NO reduce ese mínimo — solo permite
+         * partir la palabra cuando ya no cabe en la línea —, así que con el
+         * riel al lado la tarjeta se desbordaba a partir de ~230 px CSS: el
+         * celular de 390 px con zoom de página al 200 % (195 px CSS), justo la
+         * persona de baja visión. Con `min-w-0` la columna del nombre cede el
+         * ancho y `break-words` parte la palabra.
+         */}
+        <h3 className="min-w-0 break-words text-tarjeta font-semibold">
+          {sitio.nombre}
+        </h3>
         {/*
          * Columna del RIEL DE RUMBO (elemento distintivo aprobado, DESIGN.md
          * §4): reservada desde W2 para que la geometría de la tarjeta no
@@ -82,7 +103,12 @@ export function TarjetaSitio({
             </a>
           )}
           {sitio.telefonoHref && (
-            <a className={CLASE_BTN_SECUNDARIO} href={sitio.telefonoHref}>
+            <a
+              className={
+                llamarEsUnica ? CLASE_BTN_PRIMARIO : CLASE_BTN_SECUNDARIO
+              }
+              href={sitio.telefonoHref}
+            >
               Llamar
             </a>
           )}

@@ -11,20 +11,24 @@
   --color-secundario: #43525f;
   --color-fondo: #eff2f5;
   --color-superficie: #ffffff;
-  --color-borde: #d4dbe1;
+  --color-borde: #d4dbe1; /* trim decorativo: tarjeta, panel, separador */
+  --color-borde-control: #78848f; /* W6/P6 — borde de campo: select y búsqueda */
   --color-accion: #0a5ca8;
 
-  /* estados: texto / tinte / punto */
+  /* estados: texto / tinte. SIN token de punto: el punto es currentColor
+     (W6/P4) — hereda la tinta del texto del chip y no puede divergir. */
   --color-activo: #166b31;
   --color-activo-tinte: #def2e2;
-  --color-activo-punto: #1e7a3c;
   --color-lleno: #7a4f06;
   --color-lleno-tinte: #fbeed0;
-  --color-lleno-punto: #b8860b;
   --color-pausado: #49565f;
   --color-pausado-tinte: #e8ebee;
-  --color-pausado-punto: #85929d;
   --color-cerrado: #333e48;
+
+  /* mapa: marker de estado ≠ activo (W6/P4 — antes compartía token con el
+     punto del chip; mismo hex de siempre, ahora con nombre propio, así que el
+     mapa verificado en W3 no se mueve ni un píxel). */
+  --color-marker-inactivo: #85929d;
 
   /* categorías: sólido (badge-texto y marker) / tinte (badge-fondo) */
   --color-cat-acopio: #3d5a76;

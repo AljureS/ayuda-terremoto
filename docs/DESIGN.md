@@ -4,6 +4,10 @@
 > Este documento es **ley para la UI**: toda pantalla, componente y cadena de texto de `/web` se revisa contra él. Los cambios al sistema se escriben aquí primero y luego se aplican, nunca al revés.
 >
 > Decisiones aprobadas: sistema general (paleta/tipografía/layout) ✅ · elemento distintivo = **A, «riel de rumbo»** (§4) ✅ · contactos con nombre de persona = **revelado al tocar** (§7) ✅.
+>
+> **Revisión W6 (2026-08-14).** La doble auditoría devolvió tres preguntas medidas (P4 contraste del punto ●, P5 acción en `pausado`, P6 borde de controles) y un hueco de copy (P8, `/campanas` vacío). Las decisiones ya están aplicadas en §1, §3, §5, §6, §8 y §9; el antes→después y el porqué de cada una están en **§11**.
+>
+> ⚠️ **Pendiente de ratificación del usuario — un solo punto:** el punto ● del chip de estado deja de tener tinta propia y pasa a usar la del texto del chip (§1, P4). **No cambian** los 6 colores núcleo, ni los textos y tintes de los 4 estados, ni las 10 categorías, ni el elemento distintivo. El resto de la revisión es correctivo (medidas mal atribuidas) o aditivo (un token de borde, copy nuevo).
 
 ---
 
@@ -33,21 +37,26 @@ Seis colores núcleo (3 cromáticos + familia neutra) más los semánticos de es
 | `secundario` | `#43525F` | Texto secundario: dirección, horario, metadatos |
 | `fondo` | `#EFF2F5` | Fondo de página (gris frío muy claro) |
 | `superficie` | `#FFFFFF` | Tarjetas, barras, controles |
-| `borde` | `#D4DBE1` | Bordes de tarjeta e inputs (1 px; no-texto) |
+| `borde` | `#D4DBE1` | **Trim** (1 px): borde de tarjeta y panel, separadores. Decorativo: no identifica ningún control |
+| `borde-control` | `#78848F` | **Borde de campo** (1 px): `<select>` de ciudad y campo de búsqueda — lo que hace visible dónde se escribe. Añadido en W6/P6 (§11) |
 | `accion` | `#0A5CA8` | Primario: botones, links, foco, chip de filtro activo |
+
+El neutro del borde tiene **dos pesos, no dos colores**: misma familia fría, mismo rol estructural, distinta carga de trabajo. La regla que los separa está en §8 y se resume así: **si el borde es lo único que dice "aquí se escribe", tiene que verse (3.0); si solo separa dos superficies que ya se distinguen por su valor, no.**
 
 Semánticos de estado (chip = tinte de fondo + punto ● + **palabra siempre**; el color nunca es el único canal):
 
 | Estado | Texto | Tinte fondo | Punto ● | Forma del chip |
 |---|---|---|---|---|
-| `activo` | `#166B31` | `#DEF2E2` | `#1E7A3C` | ● Activo |
-| `lleno` | `#7A4F06` | `#FBEED0` | `#B8860B` | ● Lleno — ya no recibe |
-| `pausado` | `#49565F` | `#E8EBEE` | `#85929D` | ● Pausado |
-| `cerrado` | `#FFFFFF` | sólido `#333E48` | — | Cerrado (chip invertido: se lee "apagado") |
+| `activo` | `#166B31` | `#DEF2E2` | = el texto | ● Activo |
+| `lleno` | `#7A4F06` | `#FBEED0` | = el texto | ● Lleno — ya no recibe |
+| `pausado` | `#49565F` | `#E8EBEE` | = el texto | ● Pausado — no recibe por ahora |
+| `cerrado` | `#FFFFFF` | sólido `#333E48` | — (sin punto) | Cerrado (chip invertido: se lee "apagado") |
+
+**El punto usa la misma tinta que la palabra** — `currentColor`, nunca un hex propio (cambiado en W6/P4, §11). Dos razones: el punto mide 8 px y a ese tamaño una tinta intermedia se deshace a pleno sol, que es el escenario de uso; y un hex propio se desincroniza de su tinte sin que nadie lo note — fue exactamente el hallazgo P4. Con `currentColor` el contraste del punto **es** el del texto, ya medido abajo, y no puede volver a divergir. El punto no aporta color extra: aporta forma, y la forma es lo que se reconoce de lejos.
 
 ### Contraste WCAG calculado (no estimado)
 
-Todos los pares que se usan juntos, con la razón calculada por luminancia relativa (WCAG 2.x). AA texto = 4.5:1 · AA no-texto (1.4.11) = 3.0:1.
+Todos los pares que se usan juntos, con la razón calculada por luminancia relativa (WCAG 2.x) **contra el fondo real sobre el que se pinta cada elemento** — no contra el fondo de la página (precisión corregida en W6/P4, §11: el punto del chip vive sobre el tinte del chip, nunca sobre `superficie`). AA texto = 4.5:1 · AA no-texto (1.4.11) = 3.0:1.
 
 | Par en uso | Razón | Criterio | Veredicto |
 |---|---|---|---|
@@ -58,13 +67,17 @@ Todos los pares que se usan juntos, con la razón calculada por luminancia relat
 | Blanco sobre `accion` (botón primario) | **6.75** | 4.5 | AA ✓ |
 | `accion` sobre `superficie` (links) | **6.75** | 4.5 | AA ✓ |
 | `accion` sobre `fondo` (links, anillo de foco) | **6.01** | 4.5 / 3.0 | AA ✓ |
-| `activo`: texto sobre tinte | **5.63** | 4.5 | AA ✓ |
-| `activo`: punto ● sobre `superficie` | **5.38** | 3.0 no-texto | ✓ |
-| `lleno`: texto sobre tinte | **6.19** | 4.5 | AA ✓ |
-| `lleno`: punto ● sobre `superficie` | **3.25** | 3.0 no-texto | ✓ |
-| `pausado`: texto sobre tinte | **6.31** | 4.5 | AA ✓ |
-| `pausado`: punto ● sobre `superficie` | **3.18** | 3.0 no-texto | ✓ |
+| `activo`: texto **y punto ●** sobre su tinte | **5.63** | 4.5 | AA ✓ |
+| `lleno`: texto **y punto ●** sobre su tinte | **6.19** | 4.5 | AA ✓ |
+| `pausado`: texto **y punto ●** sobre su tinte | **6.31** | 4.5 | AA ✓ |
 | `cerrado`: blanco sobre sólido | **10.92** | 4.5 | AAA |
+| `borde-control` sobre `superficie` (select, búsqueda) | **3.82** | 3.0 no-texto | ✓ |
+| `borde-control` sobre `fondo` (si un campo se mueve fuera de la barra) | **3.40** | 3.0 no-texto | ✓ |
+| `marker-inactivo` sobre su aro blanco (mapa, §5) | **3.18** | 3.0 no-texto | ✓ |
+| `borde` (trim) sobre `superficie` | **1.40** | decorativo | fuera de alcance — ver §8 |
+| `borde` (trim) sobre `fondo` | **1.24** | decorativo | fuera de alcance — ver §8 |
+
+Una sola fila por estado porque texto y punto son la misma tinta: no hay un segundo número que verificar ni que pueda envejecer. Las dos últimas filas están escritas **con su razón real y baja a propósito**: el trim decorativo se declara y se justifica (§8), no se omite — una tabla de contraste que solo lista lo que aprueba no es una tabla, es una defensa.
 
 (Contrastes de las 10 categorías: tabla completa en §5.)
 
@@ -144,7 +157,8 @@ Lista por defecto, mapa bajo demanda. Justificación: solo 20/204 sitios tienen 
 - **Sticky solo la barra de 56 px** (ciudad + búsqueda + toggle): en un viewport de 568 px no se sacrifica más. Los chips se quedan arriba — se configuran una vez.
 - Selector de ciudad: `<select>` nativo (teclado del sistema, cero JS extra), ciudades ordenadas por número de sitios, con conteo: "Bogotá (68)". Sin opción "todas" en v1: la pregunta del producto es local.
 - Toggle **[Mapa]** carga Leaflet recién al tocarlo (chunk separado). Al abrir, muestra el conteo honesto (§6).
-- `/campanas`: ruta estática propia con las 46 campañas de dinero + 3 convocatorias nacionales. Tarjeta sin dirección/distancia, con "Dona aquí" como acción única. Compartible por WhatsApp — es exactamente el contenido que más se reenvía.
+- `/campanas`: ruta estática propia con las 46 campañas de dinero + 3 convocatorias nacionales. Tarjeta sin dirección/distancia, con "Dona aquí" como acción única (sujeta a la regla de arriba: solo en `activo`). Compartible por WhatsApp — es exactamente el contenido que más se reenvía.
+- **Secciones que se vacían** (añadido en W6/P8, §11): cada sección de `/campanas` —"Dona desde cualquier lugar", "Voluntariado nacional"— se renderiza **solo si tiene al menos un elemento**. Nunca un encabezado con "(0)" seguido de una lista vacía: un conteo honesto que anuncia la nada es peor que no estar. Si ninguna sección tiene contenido, las dos se sustituyen por el estado vacío de la página (§6). Y la tarjeta de acceso de la portada no se muestra con 0 campañas: **el sitio nunca enlaza a una página vacía.**
 
 ### Jerarquía exacta de la tarjeta de sitio
 
@@ -160,14 +174,16 @@ Orden de lectura: **nombre → estado → distancia → categorías → qué rec
 │ Cra 4 #22-61, Chapinero                │ ⑥ dirección + horario (15px sec.)
 │ Lun–Dom 8:00–18:00                     │
 │ ┌──────────────┐                       │
-│ │  Cómo llegar │  Fuente ↗ · hace 3 h  │ ⑦ acción única (44px, solo si hay
-│ └──────────────┘                       │    coords) + fuente y frescura (13px)
+│ │  Cómo llegar │  Fuente ↗ · hace 3 h  │ ⑦ acción única (44px, solo con
+│ └──────────────┘                       │    destino y `activo`) + fuente (13px)
 └────────────────────────────────────────┘
 ```
 
 - La tarjeta ES el detalle: no hay navegación a página de sitio. Una sola acción primaria ("Cómo llegar", deep link a Google Maps con la coordenada **del sitio**).
-- Estado ≠ activo: el chip cambia y, en `cerrado`/`lleno`, "Cómo llegar" desaparece (no se invita a ir a donde no reciben).
-- Teléfono: si existe, segunda acción `tel:` "Llamar" (44 px). Contactos con nombre de persona: §7.
+- **La acción primaria existe solo en `estado: activo`.** Regla, no lista de estados (reescrita en W6/P5, §11 — la redacción anterior enumeraba `cerrado`/`lleno` y dejaba `pausado` invitando a viajar). Si el punto no recibe **ahora mismo**, la tarjeta no ofrece "Cómo llegar"; si la campaña no recibe ahora mismo, no ofrece "Dona aquí". Vale para los cuatro estados y para cualquiera que se agregue después: la pregunta que contesta el botón es "¿voy?", y solo `activo` la contesta que sí.
+- **Informar no es invitar.** En `lleno`, `pausado` y `cerrado` la tarjeta sigue completa —nombre, chip, categorías, qué reciben, dirección, horario, fuente, frescura—: quien busca ese punto merece saber que existe y por qué hoy no. Lo único que se retira es el botón que empuja a moverse.
+- El **riel de rumbo (§4) no desaparece** en esos estados: la distancia es dato, no invitación. Saber que el punto pausado queda a 400 m sirve para volver mañana; borrarlo sería esconder información por miedo a que se malinterprete.
+- Teléfono: si existe, segunda acción `tel:` "Llamar" (44 px). Contactos con nombre de persona: §7. **Cuando no hay acción primaria y sí hay teléfono, "Llamar" toma el estilo primario**: pasa a ser la única acción de la tarjeta y además la correcta para estos estados —confirmar antes de desplazarte, §6—. Ninguna tarjeta muestra su única acción en estilo secundario.
 
 ### Desktop (≥ 1024 px)
 
@@ -271,7 +287,7 @@ Spec del marker (`L.divIcon`, SVG inline, cero assets externos):
 - Glifo blanco interior: mini-ícono SVG propio por categoría (10 paths dibujados a mano, ≤ 200 bytes c/u; iniciales no sirven — Alimentos/Agua/Acopio colisionan).
 - Target táctil efectivo ≥ 44 px (padding invisible del divIcon).
 - Sitio con varias categorías: manda la primera del array; el popup lista todas como badges.
-- Estados ≠ activo en el mapa (solo si el filtro los incluye): marker desaturado a `#85929D` con aro blanco; el popup muestra el chip de estado.
+- Estados ≠ activo en el mapa (solo si el filtro los incluye): marker desaturado a `marker-inactivo` `#85929D` con aro blanco (razón **3.18** contra el aro, §1); el popup muestra el chip de estado. **Token propio desde W6** (§11): el mismo hex servía de punto del chip y de marker apagado —dos roles sin relación colgando de un token— y por eso el rediseño del punto amenazaba con mover el mapa sin que nadie lo pidiera. El hex del marker **no cambia**: lo verificado en W3 sigue en pie píxel por píxel.
 
 ---
 
@@ -289,6 +305,7 @@ Reglas: español, voz activa, **imperativo neutro consistente** (la forma del co
 | Contexto inseguro / sin soporte | "Este navegador no permite usar la ubicación aquí. La lista completa sigue disponible." |
 | **Sin resultados** (filtros/búsqueda) | "Ningún punto coincide con esta búsqueda. Quita algún filtro o revisa otra categoría. Las campañas nacionales reciben ayuda desde cualquier lugar." — Acciones: **[Quitar filtros]** **[Ver campañas]** |
 | Ciudad sin sitios de la categoría | "Todavía no hay puntos de esta categoría en {ciudad}. Mira las campañas nacionales o revisa otra ciudad." |
+| **Campañas vacías** (`/campanas` sin ninguna campaña; añadido en W6/P8, §11) | "Todavía no hay campañas nacionales publicadas. Los puntos de ayuda con dirección siguen en la lista." — Acción: **[Ver puntos de ayuda]** |
 | **Tiles del mapa caídos** | "El mapa no cargó. Revisa tu conexión o vuelve a la lista: tiene la misma información." — Acción: **[Volver a la lista]** |
 | **Conteo honesto del mapa** (siempre visible en vista mapa) | "20 de 204 puntos ubicados en el mapa. El resto está en la lista." (cifras dinámicas, mono) |
 | Separador de no ubicados (fin de lista ordenada) | "— Sin ubicación exacta todavía (48) —" |
@@ -298,7 +315,11 @@ Reglas: español, voz activa, **imperativo neutro consistente** (la forma del co
 | **Disclaimer "Acerca de"** (contrato) | "Verifica el punto antes de desplazarte: los horarios y las necesidades cambian rápido." |
 | Frescura del dato (pie de tarjeta) | "hace 3 h" / "hace 2 días" (desde `ultimaActualizacion`) |
 | Dato comunitario sin confirmar (`verificado: false`) | "Reporte de la comunidad — sin confirmar" (texto 13 px junto a la fuente; nunca un color de alarma) |
-| Acciones canónicas | "Cómo llegar" · "Llamar" · "Dona aquí" · "Ver campañas" · "Usar mi ubicación" · "Quitar filtros" · "Reportar un cambio" |
+| Acciones canónicas | "Cómo llegar" · "Llamar" · "Dona aquí" · "Ver campañas" · **"Ver puntos de ayuda"** (W6) · "Usar mi ubicación" · "Quitar filtros" · "Reportar un cambio" |
+
+**Las campañas se mencionan solo si existen** (W6/P8, §11). Dos filas de arriba —"Sin resultados" y "Ciudad sin sitios de la categoría"— rematan mandando a las campañas nacionales. Con 0 campañas esa frase afirma algo falso y además enlaza a una página vacía, contra la regla de §10. Por eso **la frase de campañas y la acción [Ver campañas] se renderizan solo si hay al menos una campaña**; si no la hay, el estado vacío se queda con su acción restante ([Quitar filtros]) y la frase desaparece entera — no se reescribe en negativo, que sería explicarle a la persona un vacío que no le sirve de nada. Misma regla que la tarjeta de acceso de la portada (§3): el sitio no promete ayuda que hoy no tiene.
+
+**Gramática de los estados vacíos** (regla que gobierna las cuatro filas de arriba y cualquiera que se agregue): **hecho + salida**, en ese orden y en dos frases cortas. Primero qué pasa, sin rodeos ni disculpas; después a dónde ir, con una acción canónica. Nunca se culpa a la persona (en `/campanas` no filtró nada: no hay nada que "quitar") y nunca se dramatiza un vacío de datos con tono de error — un vacío es una foto del dato de hoy, no una falla. "Todavía" es la palabra del sistema para eso: dice que el dato falta **ahora**, y esta emergencia se mueve rápido. Mismo uso en "Todavía no hay puntos de esta categoría" y en "Sin ubicación exacta todavía".
 
 SEO / Open Graph (semilla para W5, verificada en caracteres):
 - `<title>`: **"Mapa de Ayuda — Terremoto en Colombia"** (37/60)
@@ -324,7 +345,7 @@ Hecho (auditoría F6): 5 coordinadores de voluntariado publicados con nombre + c
 
 ## 8. Accesibilidad — restricción de diseño, no parche
 
-- **Contraste:** todo par texto/fondo del sistema está calculado en §1 y §5; nada por debajo de AA 4.5 (texto) / 3.0 (no-texto). Cualquier color nuevo entra aquí con su razón calculada antes de tocar código.
+- **Contraste — alcance explícito** (reescrito en W6/P4+P6, §11; la redacción anterior prometía un piso universal que el trim de tarjeta nunca cumplió): todo par se calcula en §1 y §5 **contra el fondo real sobre el que se pinta**, no contra el fondo de la página. Pisos: **4.5** para texto · **3.0** para lo que identifica un control o porta información (borde de campo, marker, glifo, punto de estado). **Fuera** de ese piso, declarado y medido igual: lo puramente decorativo —trim de tarjeta, separadores, sombra—, que no identifica ningún control ni carga significado; la tarjeta ya se separa por el escalón de valor `superficie`/`fondo` más `--shadow-tarjeta`, y subir ese trim a 3.0 convertiría la lista en una cuadrícula de hoja de cálculo. Por eso `borde` (1.40) es correcto donde está y `borde-control` (3.82) es obligatorio donde el borde es lo único que dice "aquí se escribe". Todo color nuevo entra aquí con su razón calculada **y declarando contra qué fondo se midió**: una razón sin su fondo es una cifra sin unidad.
 - **Targets táctiles ≥ 44 px:** botones, chips, toggle, select de ciudad, markers (padding invisible), "Ver contacto", links de acción del pie de tarjeta.
 - **Tipografía:** base 16 px; nada informativo por debajo de 13 px; interlínea ≥ 1.4 en prosa.
 - **Color nunca único canal:** estado = ● + palabra; categoría = color + etiqueta; marker = color + glifo + popup; "sin confirmar" = texto, no color.
@@ -345,20 +366,23 @@ Tailwind v4 — bloque `@theme` en `globals.css`:
   --color-secundario: #43525F;
   --color-fondo: #EFF2F5;
   --color-superficie: #FFFFFF;
-  --color-borde: #D4DBE1;
+  --color-borde: #D4DBE1;        /* trim decorativo: tarjeta, panel, separador */
+  --color-borde-control: #78848F; /* W6/P6 — borde de campo: select y búsqueda */
   --color-accion: #0A5CA8;
 
-  /* estados: texto / tinte / punto */
+  /* estados: texto / tinte. SIN token de punto: el punto es currentColor
+     (W6/P4) — hereda la tinta del texto del chip y no puede divergir. */
   --color-activo: #166B31;
   --color-activo-tinte: #DEF2E2;
-  --color-activo-punto: #1E7A3C;
   --color-lleno: #7A4F06;
   --color-lleno-tinte: #FBEED0;
-  --color-lleno-punto: #B8860B;
   --color-pausado: #49565F;
   --color-pausado-tinte: #E8EBEE;
-  --color-pausado-punto: #85929D;
   --color-cerrado: #333E48;
+
+  /* mapa: marker de estado ≠ activo (W6/P4 — antes compartía token con el
+     punto del chip; mismo hex de siempre, ahora con nombre propio) */
+  --color-marker-inactivo: #85929D;
 
   /* categorías: sólido (badge-texto y marker) / tinte (badge-fondo) */
   --color-cat-acopio: #3D5A76;        --color-cat-acopio-tinte: #E4EBF1;
@@ -395,10 +419,77 @@ Tailwind v4 — bloque `@theme` en `globals.css`:
 
 Reglas de uso: las tarjetas se definen por `superficie` + `borde` 1 px + sombra mínima (nítido a pleno sol, barato de pintar). `cifra`/mono solo vía token. Ningún hex inline en componentes: si no hay token, primero se agrega aquí.
 
+**Cuál de los dos bordes** (W6/P6): `borde-control` va en los controles **que aceptan entrada** —`<select>`, campos de texto—, cuyo contenido es dato de la persona y no una etiqueta que los nombre: sin un borde visible no hay nada que diga dónde se escribe. Los controles **con etiqueta propia** —botones y chips, que dicen "Mapa", "Alimentos", "Llamar" a 6.75:1, y que al activarse se rellenan sólidos de `accion`— se identifican por su palabra y conservan `borde` como trim. El efecto secundario es bienvenido: en la barra sticky los dos campos quedan emparejados entre sí y el botón "Mapa" se lee como lo que es, un botón, no un tercer campo.
+
 ---
 
 ## 10. Gobernanza y "nunca"
 
 - Toda UI nueva se revisa contra este documento; una desviación se corrige citando el token o la regla exacta violada.
 - Cambios al sistema: primero aquí, después el código.
-- **Nunca:** decoración que no informa · rojo dominante · fuentes o assets externos · copy en inglés · color como único canal · más de un elemento distintivo · hex fuera de tokens · texto crítico bajo 4.5:1 · targets bajo 44 px.
+- **La revisión también va al revés** (aprendido en W6): si el código sigue este documento al pie de la letra y aun así el resultado está mal, el defecto es del documento. P4, P5 y P6 fueron los tres casos —una medida contra el fondo equivocado, una regla escrita como lista de estados, un piso de contraste prometido de más—, y en los tres el código era fiel. Un hallazgo de auditoría contra la UI se lee primero como sospecha contra estas páginas.
+- **Toda razón de contraste se declara con su fondo.** Un número solo es verificable si dice contra qué se midió; si el elemento se mueve de fondo, la fila se recalcula antes del cambio, no después.
+- **Preferir la regla al enumerado.** "Solo en `activo`" sobrevive a un estado nuevo; "en `cerrado`/`lleno`" no. Cuando una regla se pueda escribir como invariante positivo, se escribe así.
+- **Nunca:** decoración que no informa · rojo dominante · fuentes o assets externos · copy en inglés · color como único canal · más de un elemento distintivo · hex fuera de tokens · texto crítico bajo 4.5:1 · targets bajo 44 px · una razón de contraste declarada contra un fondo que no es el que se pinta · un enlace hacia una página vacía.
+
+---
+
+## 11. Revisiones del sistema
+
+El histórico no se borra: cada revisión deja aquí el antes→después y el porqué. La aprobación original del usuario (cabecera, 2026-08-14) se mantiene intacta.
+
+### Revisión W6 — 2026-08-14 (doble auditoría, `docs/PLAN_WEB.md`)
+
+QA recalculó los 34 pares de §1+§5 por luminancia y **coinciden al centésimo**: la tabla era correcta donde medía lo que decía medir. Los cuatro cambios de abajo salen de los cuatro sitios donde el documento decía otra cosa, o no decía nada.
+
+**P4 — El punto ● se medía contra el fondo equivocado. → Opción (b), resuelta con una tinta en vez de tres hexes.**
+
+| | Antes | Ahora |
+|---|---|---|
+| Punto `activo` | `#1E7A3C`, declarado **5.38** sobre `superficie` | `currentColor` = `#166B31` · **5.63** sobre su tinte |
+| Punto `lleno` | `#B8860B`, declarado **3.25** sobre `superficie` — real **2.83** sobre su tinte | `currentColor` = `#7A4F06` · **6.19** sobre su tinte |
+| Punto `pausado` | `#85929D`, declarado **3.18** sobre `superficie` — real **2.66** sobre su tinte | `currentColor` = `#49565F` · **6.31** sobre su tinte |
+| Marker apagado del mapa | `--color-pausado-punto` (token prestado) | `--color-marker-inactivo: #85929D` — **mismo hex**, nombre propio |
+
+Se pedía elegir entre corregir la tabla (a) u oscurecer los puntos (b). Es (b), y ejecutada hasta el final: el punto deja de tener tinta propia. Oscurecerlo hasta rozar el 3.0 habría arreglado dos cifras dejando en pie la causa —tres hexes a mano que nadie vuelve a medir cuando un tinte se mueve—; heredar la tinta del texto hace que el defecto no pueda repetirse, porque ya no hay dos números que puedan separarse. De paso el sistema pierde tres tokens y gana legibilidad: el punto mide 8 px y **el peor de los tres pasa de 2.66 a 5.63** (el peor era `pausado`, ahora es `activo`), en un punto que se mira a pleno sol.
+
+La tabla se corrige igual, que era la mitad (a) del hallazgo: ahora todo se mide contra el fondo real y §8 lo fija como regla. El `3.18` que decía ser del punto `pausado` no era falso, era **de otro elemento**: es el marker apagado contra su aro blanco, y ahí quedó, medido y con nombre.
+
+Efecto colateral evitado: `--color-pausado-punto` alimentaba también el marker del mapa. Sin separarlo, retocar un chip habría movido el mapa verificado en W3. Se separó primero.
+
+**P5 — `pausado` conservaba "Cómo llegar". → Desaparece; y la regla se reescribe como invariante.**
+
+Antes: *«en `cerrado`/`lleno`, "Cómo llegar" desaparece»*. Ahora: **la acción primaria existe solo en `activo`.** El código era fiel a §3; el defecto era de §3, que enumeró estados en lugar de decir la regla y por eso dejó fuera el estado que se agregó después.
+
+Para quien va a desplazarte con una caja, `pausado` significa lo mismo que `lleno`: hoy no. Y significa algo peor —`lleno` tiene una causa conocida que se resuelve sola cuando el acopio se despacha; `pausado` no dice por qué, y el ciclo `activo ⇄ lleno ⇄ pausado → cerrado` lo pone a un paso de cerrar—. Un botón que abre Google Maps es una invitación a moverse, y ninguna versión de "no está recibiendo" justifica un viaje en bus con una caja. Lo que sí sirve: llamar antes. Por eso "Llamar" toma el estilo primario cuando queda sola.
+
+Cambios que se derivan de la misma regla:
+- El chip pasa de "Pausado" a **"Pausado — no recibe por ahora"**, en el patrón de "Lleno — ya no recibe". "Pausado" a secas nombra el estado del punto pero no contesta la única pregunta de quien lo lee. "Por ahora" carga el `⇄`: no está cerrado, vuelve. (`cerrado` se queda sin cola explicativa a propósito: es la única de las cuatro palabras que ya se entiende sola.)
+- La regla alcanza `hrefDonar`, que hoy tampoco mira el estado: una campaña `cerrada` ofrece "Dona aquí" y ahí lo que se pierde es dinero. No estaba en el hallazgo; es la misma regla.
+
+Hoy no hay ningún sitio `pausado`: esto es superficie latente, no un cambio visible. Por eso mismo había que escribirlo antes de que aparezca el primero.
+
+**P6 — Borde de inputs a 1.40:1. → Se sube, solo en los campos que aceptan entrada.**
+
+| | Antes | Ahora |
+|---|---|---|
+| `<select>` de ciudad, campo de búsqueda | `borde` `#D4DBE1` · **1.40** sobre `superficie` | `borde-control` **`#78848F`** · **3.82** sobre `superficie`, **3.40** sobre `fondo` |
+| Tarjetas, paneles, separadores | `borde` `#D4DBE1` · **1.40** | sin cambio, ahora **declarado** como decorativo en §1 y §8 |
+| Botones y chips de filtro | `borde` `#D4DBE1` | sin cambio |
+
+El hallazgo era discutible en WCAG y real en la calle: bajo sol, con baja visión, un borde a 1.40 no existe, y un campo de búsqueda vacío sobre blanco no tiene otra cosa que lo delimite —su contenido es lo que la persona escribe, no una etiqueta que lo nombre—. Cuesta un hex. Se sube.
+
+No se sube en botones ni chips, y la línea no es de conveniencia: esos controles llevan su propia palabra a 6.75:1 y al activarse se rellenan sólidos de `accion`. Su borde es trim, no identificación. Diez chips con borde oscuro en la fila más cargada de la pantalla habrían pesado justo donde el sistema promete estar quieto. `#78848F` se eligió con margen sobre los dos fondos del sistema (3.82 / 3.40) para que un campo pueda moverse fuera de la barra sin recalcular nada.
+
+Esto obligó a reescribir §8, que prometía *«nada por debajo de AA 4.5 / 3.0»* — una promesa que el trim de tarjeta nunca cumplió y que la corrección de P6 volvía falsa de nuevo. Ahora §8 declara el alcance del piso y qué queda fuera, con la razón medida a la vista.
+
+**P8 — `/campanas` sin estado vacío. → Copy definitivo + la regla que lo hace aparecer.**
+
+> **"Todavía no hay campañas nacionales publicadas.**
+> **Los puntos de ayuda con dirección siguen en la lista."** — Acción: **[Ver puntos de ayuda]**
+
+El copy solo no bastaba: el encabezado "Dona desde cualquier lugar" se dibuja siempre, así que con dataset vacío el "(0)" habría sobrevivido al arreglo. Va con su regla estructural en §3 —sección sin elementos no se dibuja; ninguna sección con elementos ⇒ estado vacío de la página; y la portada no enlaza a `/campanas` con 0 campañas—.
+
+"Ver puntos de ayuda" entra a la lista de acciones canónicas de §6 como espejo exacto de "Ver campañas". §6 gana además la gramática de los estados vacíos —hecho + salida, sin culpar y sin tono de error—, que estaba implícita en las cuatro filas existentes y ahora es explícita para las que vengan.
+
+**Qué NO cambió:** los 6 colores núcleo · los textos y tintes de los 4 estados · las 10 categorías · las 2 tipografías y la escala · el elemento distintivo (riel de rumbo) · el revelado al tocar de §7 · el layout · el hex del marker del mapa.

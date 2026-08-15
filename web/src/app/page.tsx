@@ -1,6 +1,10 @@
 import { Encabezado, PieDatos } from "@/components/Encabezado";
 import { ListaFiltrada } from "@/components/ListaFiltrada";
 import { prepararDatos } from "@/lib/datos";
+import { DESC_HOME, metadatosRuta, TITULO_HOME } from "@/lib/seo";
+
+/** Textos literales de DESIGN.md §6 (37/60 y 88/90). */
+export const metadata = metadatosRuta("/", TITULO_HOME, DESC_HOME);
 
 /**
  * Home — server component: lee /data/sitios.json EN BUILD TIME (única

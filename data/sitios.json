@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-08-13T19:16:42-05:00",
+  "actualizado": "2026-08-14T19:16:17-05:00",
   "sitios": [
     {
       "id": "acn-colombia",
@@ -2498,7 +2498,7 @@
       "categorias": [
         "dinero"
       ],
-      "descripcion": "Fondos para atención humanitaria de emergencia\nCuenta Ahorros Bancolombia: 261-000749-22, CC 25.289.478, - Enviar comprobante a Gina Rodríguez: +57 3137460152",
+      "descripcion": "Fondos para atención humanitaria de emergencia\nCuenta Ahorros Bancolombia: 261-000749-22 (Fundación Amigos por una Nueva Colombia)\nEnviar comprobante por el contacto publicado por la organización.",
       "direccion": "",
       "ciudad": "",
       "localidad": "",
@@ -2513,8 +2513,8 @@
       "fuente": "https://docs.google.com/spreadsheets/d/106XcWaBgaxFG-Y8R14bTOq9E2igE9Zu3bVaU_g5jc6U/edit?gid=1375250837",
       "estado": "activo",
       "verificado": false,
-      "manual": false,
-      "ultimaActualizacion": "2026-08-13T08:55:26-05:00"
+      "manual": true,
+      "ultimaActualizacion": "2026-08-14T19:16:17-05:00"
     },
     {
       "id": "fundacion-amigos-por-una-nueva-colombia-popayan",

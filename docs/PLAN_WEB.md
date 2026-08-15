@@ -8,11 +8,11 @@ Plan ejecutable fase por fase para `/web`: la página estática (Next.js App Rou
 
 ## Realidades del dato que moldean el producto (del pipeline, 2026-08-13)
 
-1. **204 sitios en ~25 ciudades** → el selector de ciudad (que el contrato preveía oculto "mientras solo exista Bogotá") va **visible desde el día 1**. Default: Bogotá (69 sitios).
+1. **204 sitios en 28 ciudades** → el selector de ciudad (que el contrato preveía oculto "mientras solo exista Bogotá") va **visible desde el día 1**. Default: Bogotá (68 sitios, 67 activos).
 2. **Solo ~20 sitios tienen coordenadas** (OSM Colombia sin números de placa; ubicación manual en curso en `docs/UBICAR_A_MANO.md`) → **la LISTA es la vista por defecto y el héroe del producto**; el mapa es mejora progresiva que crece a medida que el humano ubica puntos. Esto además es óptimo para 3G (el chunk de Leaflet no se paga de entrada).
 3. **49 sitios sin ciudad ni punto físico** (46 campañas de dinero + 3 convocatorias nacionales) → necesitan presentación propia (sección o filtro "Campañas y convocatorias nacionales"), nunca mezclados con "cerca de ti".
 4. **Los estados ya trabajan**: hay 1 sitio `lleno` real y 7 con fechas de cierre en el texto → la semántica de estados (activo/lleno/pausado/cerrado) debe leerse de un vistazo, con texto además de color.
-5. **5 contactos traen nombre de persona + celular** (coordinadores de voluntariado publicados por sus organizaciones) → decisión de diseño/privacidad sobre cómo renderizarlos (observación de la auditoría F6).
+5. **Contactos con nombre de persona + celular** (coordinadores publicados por sus organizaciones) → decisión de diseño/privacidad sobre cómo renderizarlos (observación de la auditoría F6). Cifra actualizada en W6: **10 sitios → 14 entradas → 10 personas únicas** (varias se repiten en dos sitios); el "5" original quedó viejo al crecer el dataset. Tratamiento aprobado: revelado al tocar.
 
 ## Estado
 
@@ -20,8 +20,8 @@ Plan ejecutable fase por fase para `/web`: la página estática (Next.js App Rou
 - [x] W2 — Base + Lista + Filtros + Búsqueda — gate ✅ (build limpio 107 KB first-load, lista pre-renderizada, contactos personales 0 en claro con assert de build, 320/1280 px verificados con render real, URL de filtros funcionando; 2026-08-14)
 - [x] W3 — Mapa Leaflet — gate ✅ (chunk aparte con 0 refs en HTML inicial, 29/29 checks de render real, popup + Cómo llegar, conteo honesto por filtro, 109 KB first-load; 2026-08-14)
 - [x] W4 — Ubicación + distancia + privacidad UI — gate ✅ (riel de rumbo funcionando, trazado del flujo de coordenadas con barrido de aguja en runtime: DOM/URL/red/storage limpios; 4 fallos con microcopy, localStorage solo con opt-in, +2 KB → 111 KB; 2026-08-14)
-- [ ] W5 — Contenido fijo + SEO/OG + headers CSP
-- [ ] W6 — QA + auditoría de privacidad (doble GO)
+- [x] W5 — Contenido fijo + SEO/OG + headers CSP — gate ✅ (`/acerca` legible sin JS, og.png 1200×630/52 KB, metadata dentro de límites en las 3 rutas, CSP con 0 violaciones en 4 escenarios reales, delta de peso 0 KB; 2026-08-14)
+- [x] W6 — QA + auditoría de privacidad (doble GO) — gates ✅ (QA: Lighthouse móvil 100 perf en las 3 rutas, a11y 100 tras fix, 109 KB gz, matriz de 12 edge cases sin un crash · Privacidad: promesa verificada contra el build minificado; NO-GO inicial por la CSP que podía no llegar a producción → resuelto con `vercel.json` duplicado; 10 hallazgos corregidos; 2026-08-14)
 - [ ] W7 — Ship: docs de deploy + `/ship-check` → **página en producción**
 
 ## W1 — Sistema de diseño

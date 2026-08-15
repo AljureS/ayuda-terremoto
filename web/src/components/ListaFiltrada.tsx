@@ -27,12 +27,15 @@ import { CLASE_BTN_PRIMARIO, CLASE_BTN_SECUNDARIO } from "./piezas";
  * viene pre-renderizada en el HTML del build con el estado por defecto
  * (Bogotá, solo activos): sin JS la página sigue siendo útil.
  *
- * Filtros compartibles por URL (?cat=sangre&ciudad=cali&ver=todos&q=…) con
+ * Filtros compartibles por URL (?cat=sangre&ciudad=cali&ver=todos) con
  * replaceState — arquitectura §3.11. PROHIBIDO por contrato que cualquier
  * dato de ubicación del usuario toque la URL: el efecto de sincronización de
- * abajo depende SOLO de los filtros ([inicializado, cats, ciudad, verTodos,
- * q]) y `pos` no aparece en él ni en su cuerpo. La posición del usuario (W4)
+ * abajo depende SOLO de los filtros ([inicializado, cats, ciudad, verTodos])
+ * y `pos` no aparece en él ni en su cuerpo. La posición del usuario (W4)
  * vive únicamente en el estado `pos` de este componente.
+ *
+ * Lo que la persona ESCRIBE en el buscador tampoco sale de su dispositivo
+ * (W6/BAJA-1): ni a localStorage ni a la URL. Ver el efecto 2).
  */
 
 /** Una fila de la lista: el sitio y, si hay ubicación y coordenadas, el
@@ -119,6 +122,9 @@ export function ListaFiltrada({
       setCiudad(ciudadParam);
     }
     if (p.get("ver") === "todos") setVerTodos(true);
+    // `?q=` se LEE (un enlace viejo o escrito a mano sigue funcionando) pero
+    // nunca se escribe: el efecto 2) lo borra de la barra de direcciones en el
+    // primer render. Ver la nota de W6/BAJA-1 ahí.
     const qParam = p.get("q");
     if (qParam) setQ(qParam);
 
@@ -179,6 +185,18 @@ export function ListaFiltrada({
 
   // 2) Al cambiar filtros: reflejarlos con replaceState (URL compartible por
   //    WhatsApp, sin ensuciar el historial). Solo filtros: nunca ubicación.
+  //
+  //    LA BÚSQUEDA LIBRE (`q`) NO SE ESCRIBE EN LA URL (fix W6/BAJA-1). W4 ya
+  //    la había dejado fuera de localStorage por ser "texto que la persona
+  //    escribió, a veces su propia dirección"; la URL es el artefacto MÁS
+  //    expuesto de los dos: se comparte por WhatsApp, se pega en un chat y
+  //    queda en el historial del teléfono. Lo que la gente comparte de verdad
+  //    —"sangre en Bogotá"— son la categoría y la ciudad, y siguen viajando.
+  //    Se sigue LEYENDO `?q=` al cargar (arriba) para no romper un enlace ya
+  //    compartido; como este efecto usa replaceState, ese `q` heredado
+  //    desaparece de la barra de direcciones y de la entrada del historial en
+  //    cuanto la página monta. Por eso `q` tampoco está en las dependencias:
+  //    si estuviera, cada tecla reescribiría la URL sin necesidad.
   useEffect(() => {
     if (!inicializado) return;
     const p = new URLSearchParams();
@@ -187,14 +205,13 @@ export function ListaFiltrada({
     }
     if (ciudad !== CIUDAD_DEFAULT) p.set("ciudad", ciudad);
     if (verTodos) p.set("ver", "todos");
-    if (q) p.set("q", q);
     const qs = p.toString();
     window.history.replaceState(
       null,
       "",
       qs ? `${window.location.pathname}?${qs}` : window.location.pathname,
     );
-  }, [inicializado, cats, ciudad, verTodos, q]);
+  }, [inicializado, cats, ciudad, verTodos]);
 
   const qNorm = sinTildes(q.trim());
 
@@ -316,9 +333,18 @@ export function ListaFiltrada({
           <label className="sr-only" htmlFor="filtro-ciudad">
             Ciudad
           </label>
+          {/*
+            `borde-control` (#78848F, 3.82 sobre `superficie`) y no `borde`
+            (1.40) — W6/P6, DESIGN.md §1/§9. La regla: si el borde es lo único
+            que dice "aquí se escribe", tiene que verse. Este `<select>` y el
+            campo de búsqueda de abajo son los ÚNICOS dos controles que aceptan
+            entrada; su contenido es dato de la persona, no una etiqueta que
+            los nombre. Botones y chips se quedan con `borde` como trim: llevan
+            su propia palabra a 6.75:1 y al activarse se rellenan sólidos.
+          */}
           <select
             id="filtro-ciudad"
-            className="h-tap w-2/5 max-w-52 min-w-0 rounded-tarjeta border border-borde bg-superficie px-2 text-base"
+            className="h-tap w-2/5 max-w-52 min-w-0 rounded-tarjeta border border-borde-control bg-superficie px-2 text-base"
             value={ciudad}
             onChange={(e) => setCiudad(e.target.value)}
           >
@@ -335,7 +361,7 @@ export function ListaFiltrada({
           <input
             id="filtro-busqueda"
             type="search"
-            className="h-tap min-w-0 flex-1 rounded-tarjeta border border-borde bg-superficie px-3 text-base"
+            className="h-tap min-w-0 flex-1 rounded-tarjeta border border-borde-control bg-superficie px-3 text-base"
             placeholder="Buscar…"
             enterKeyHint="search"
             autoComplete="off"
@@ -431,13 +457,26 @@ export function ListaFiltrada({
               </a>
             )}
 
-            {/* Línea de conteo honesto (mono — DESIGN.md §4C/§6). */}
-            <p
+            {/*
+              Línea de conteo honesto (mono — DESIGN.md §4C/§6) y, desde W6,
+              el ENCABEZADO DE SECCIÓN de la lista.
+
+              Por qué h2 (fix W6/P2): la home encadenaba h1 → 67 h3 sin un solo
+              h2, el único audit de accesibilidad en rojo. De las dos salidas
+              (bajar las tarjetas a h2 o meter un h2 de sección) se elige esta:
+              deja la home con la MISMA cadena que /campanas y /acerca
+              (h1 → h2 de sección → h3 de tarjeta), el nombre del sitio sigue
+              siendo h3 en las dos tarjetas del proyecto, y quien navegue por
+              encabezados cae en la frase que dice cuántos puntos hay y dónde.
+              El tamaño no cambia: el reset de Tailwind hereda font-size y
+              font-weight en los encabezados, así que las clases mandan.
+            */}
+            <h2
               className="mt-4 font-mono text-sec tabular-nums"
               aria-live="polite"
             >
               {conteo}
-            </p>
+            </h2>
 
             {/* Ubicación: SOLO on-tap, nunca al cargar (contrato). */}
             <Ubicacion pos={pos} onPos={setPos} />
@@ -484,6 +523,7 @@ export function ListaFiltrada({
                 sinDatos={sitios.length === 0}
                 soloCategoria={cats.size > 0 && !qNorm && ciudad !== TODAS}
                 nombreCiudad={nombreCiudad}
+                hayCampanas={nCampanas > 0}
                 onQuitarFiltros={quitarFiltros}
               />
             )}
@@ -553,29 +593,60 @@ export function ListaFiltrada({
   );
 }
 
-/** Estados vacíos — microcopy exacto de DESIGN.md §6. */
+/**
+ * Estados vacíos — microcopy exacto de DESIGN.md §6.
+ *
+ * `hayCampanas` (W6/P8): §6 fija que **las campañas se mencionan solo si
+ * existen**. Con 0 campañas, la frase que manda a las campañas nacionales
+ * afirma algo falso y además enlaza a una página vacía (§10), así que la frase
+ * y la acción [Ver campañas] desaparecen enteras — no se reescriben en
+ * negativo. Es la misma regla que ya gobierna la tarjeta de acceso de arriba
+ * (`nCampanas > 0`) y las secciones de /campanas.
+ */
 function EstadoVacio({
   sinDatos,
   soloCategoria,
   nombreCiudad,
+  hayCampanas,
   onQuitarFiltros,
 }: {
   sinDatos: boolean;
   soloCategoria: boolean;
   nombreCiudad: string;
+  hayCampanas: boolean;
   onQuitarFiltros: () => void;
 }) {
+  const verCampanas = hayCampanas ? (
+    <a className={CLASE_BTN_SECUNDARIO} href="/campanas/">
+      Ver campañas
+    </a>
+  ) : null;
+
   if (sinDatos) {
     return (
       <div className="mt-3 rounded-tarjeta border border-borde bg-superficie p-5 shadow-tarjeta">
+        {/*
+          HECHO + SALIDA, la gramática de los estados vacíos de DESIGN.md §6.
+          Con campañas, la salida son las campañas. SIN campañas —dataset
+          entero vacío— este estado se quedaba en el hecho y sin ninguna
+          salida, que era la pregunta abierta que W6 dejó al director. La
+          salida es /acerca: es la única página que sigue siendo útil sin un
+          solo dato, porque explica qué es el sitio y cómo reportar un cambio.
+          Una sola acción canónica, como pide §6: la de /acerca aparece
+          únicamente cuando [Ver campañas] no existe.
+        */}
         <p className="text-sec text-secundario">
-          No hay puntos disponibles por ahora. Las campañas nacionales reciben
-          ayuda desde cualquier lugar.
+          No hay puntos disponibles por ahora.{" "}
+          {hayCampanas
+            ? "Las campañas nacionales reciben ayuda desde cualquier lugar."
+            : "Mira qué es este sitio y cómo reportar un cambio."}
         </p>
         <div className="mt-3">
-          <a className={CLASE_BTN_SECUNDARIO} href="/campanas/">
-            Ver campañas
-          </a>
+          {verCampanas ?? (
+            <a className={CLASE_BTN_SECUNDARIO} href="/acerca/">
+              Acerca de este sitio
+            </a>
+          )}
         </div>
       </div>
     );
@@ -584,14 +655,12 @@ function EstadoVacio({
     return (
       <div className="mt-3 rounded-tarjeta border border-borde bg-superficie p-5 shadow-tarjeta">
         <p className="text-sec text-secundario">
-          Todavía no hay puntos de esta categoría en {nombreCiudad}. Mira las
-          campañas nacionales o revisa otra ciudad.
+          Todavía no hay puntos de esta categoría en {nombreCiudad}.{" "}
+          {hayCampanas
+            ? "Mira las campañas nacionales o revisa otra ciudad."
+            : "Revisa otra ciudad."}
         </p>
-        <div className="mt-3">
-          <a className={CLASE_BTN_SECUNDARIO} href="/campanas/">
-            Ver campañas
-          </a>
-        </div>
+        {verCampanas && <div className="mt-3">{verCampanas}</div>}
       </div>
     );
   }
@@ -599,8 +668,9 @@ function EstadoVacio({
     <div className="mt-3 rounded-tarjeta border border-borde bg-superficie p-5 shadow-tarjeta">
       <p className="text-sec text-secundario">
         Ningún punto coincide con esta búsqueda. Quita algún filtro o revisa
-        otra categoría. Las campañas nacionales reciben ayuda desde cualquier
-        lugar.
+        otra categoría.
+        {hayCampanas &&
+          " Las campañas nacionales reciben ayuda desde cualquier lugar."}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
@@ -610,9 +680,7 @@ function EstadoVacio({
         >
           Quitar filtros
         </button>
-        <a className={CLASE_BTN_SECUNDARIO} href="/campanas/">
-          Ver campañas
-        </a>
+        {verCampanas}
       </div>
     </div>
   );

@@ -9,10 +9,21 @@ export function EstadoChip({ estado }: { estado: Estado }) {
       className={`inline-flex items-center gap-1.5 rounded-chip px-2.5 py-1 text-sec font-medium ${info.chip}`}
     >
       <span className="sr-only">Estado: </span>
+      {/* `bg-current` = currentColor: el punto se pinta con la MISMA tinta del
+          texto del chip (W6/P4). No hay clase de color por estado que pueda
+          desincronizarse del tinte, y el contraste del punto es por
+          construcción el del texto, ya medido en DESIGN.md §1. */}
+      {/* `shrink-0`: el punto es un flex item de 8 px y sin él se comprime
+          cuando el chip se estrecha — medido en el render de W7 con el texto
+          nuevo de `pausado`: 8 px a 320 px, pero 4 px (un óvalo de 4×8) a 195
+          px CSS, o sea el celular de 390 px con zoom al 200 %. DESIGN.md §1
+          fija que el punto mide 8 px y que lo que aporta es FORMA; deformarlo
+          justo en la pantalla de quien tiene baja visión es perder el canal
+          que sustituye al color. */}
       {info.punto && (
         <span
           aria-hidden="true"
-          className={`h-2 w-2 rounded-full ${info.punto}`}
+          className="h-2 w-2 shrink-0 rounded-full bg-current"
         />
       )}
       {info.texto}

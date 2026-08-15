@@ -43,28 +43,43 @@ export const CATEGORIA_INFO: Record<
   dinero: { etiqueta: "Dinero", badge: "bg-cat-dinero-tinte text-cat-dinero" },
 };
 
-/** Chip de estado: tinte + punto ● + palabra SIEMPRE (el color nunca va solo). */
+/**
+ * Chip de estado: tinte + punto ● + palabra SIEMPRE (el color nunca va solo).
+ *
+ * EL PUNTO NO TIENE TINTA PROPIA (W6/P4, DESIGN.md §1 y §11): es
+ * `currentColor`, o sea la misma tinta del texto del chip. Por eso `punto` es
+ * un booleano —lo tiene o no— y no una clase de color: los tres hex a mano
+ * (`--color-*-punto`) se medían contra `superficie` cuando en realidad se
+ * pintan sobre el tinte del chip, y el peor de los tres daba 2.66. Heredando
+ * la tinta, el contraste del punto ES el del texto (5.63 / 6.19 / 6.31) y no
+ * hay dos números que puedan volver a separarse.
+ *
+ * El texto de `pausado` contesta la única pregunta de quien lo lee —"¿voy?"—
+ * en el patrón de `lleno` (W6/P5): "por ahora" carga el ciclo `activo ⇄
+ * pausado`. `cerrado` se queda sin cola explicativa a propósito: es la única
+ * de las cuatro palabras que ya se entiende sola.
+ */
 export const ESTADO_INFO: Record<
   Estado,
-  { texto: string; chip: string; punto: string | null }
+  { texto: string; chip: string; punto: boolean }
 > = {
   activo: {
     texto: "Activo",
     chip: "bg-activo-tinte text-activo",
-    punto: "bg-activo-punto",
+    punto: true,
   },
   lleno: {
     texto: "Lleno — ya no recibe",
     chip: "bg-lleno-tinte text-lleno",
-    punto: "bg-lleno-punto",
+    punto: true,
   },
   pausado: {
-    texto: "Pausado",
+    texto: "Pausado — no recibe por ahora",
     chip: "bg-pausado-tinte text-pausado",
-    punto: "bg-pausado-punto",
+    punto: true,
   },
   // Chip invertido, sin punto: se lee "apagado" (DESIGN.md §1).
-  cerrado: { texto: "Cerrado", chip: "bg-cerrado text-white", punto: null },
+  cerrado: { texto: "Cerrado", chip: "bg-cerrado text-white", punto: false },
 };
 
 /** Orden de los chips de filtro (DESIGN.md §3: Alimentos, Agua, Sangre, Ropa…). */

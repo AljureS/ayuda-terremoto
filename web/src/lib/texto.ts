@@ -17,6 +17,22 @@ export function slugCiudad(nombre: string): string {
 }
 
 /**
+ * Fecha y hora legibles en hora de Bogotá ("13 de agosto de 2026, 7:16 p. m.").
+ * Solo para "Acerca de", donde el dato exacto importa más que el "hace X h".
+ * Se calcula EN BUILD: la zona se fija a America/Bogota para que el texto no
+ * dependa de dónde corra la build.
+ */
+export function fechaBogota(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("es-CO", {
+    timeZone: "America/Bogota",
+    dateStyle: "long",
+    timeStyle: "short",
+  });
+}
+
+/**
  * "hace 3 h" / "hace 2 días" (microcopy DESIGN.md §6), calculado EN BUILD
  * respecto del momento de la build — en W2 no hay relojes en el cliente.
  */

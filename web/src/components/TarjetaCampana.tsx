@@ -15,7 +15,15 @@ import {
  * sin riel — la ayuda se da desde cualquier lugar. Acción única: "Dona aquí".
  */
 export function TarjetaCampana({ sitio }: { sitio: SitioVista }) {
+  // `hrefDonar` ya aplica la compuerta de estado (solo `activo`, DESIGN.md §3):
+  // una campaña que hoy no recibe no ofrece "Dona aquí".
   const donar = hrefDonar(sitio);
+  /**
+   * "Llamar" toma el estilo primario cuando queda sola (DESIGN.md §3, W6/P5):
+   * sin "Dona aquí" es la única acción de la tarjeta, y ninguna tarjeta
+   * muestra su única acción en estilo secundario.
+   */
+  const llamarEsUnica = !donar;
   // No repetir como link de pie lo que ya es la acción principal.
   const sitioMeta: SitioVista = {
     ...sitio,
@@ -48,7 +56,12 @@ export function TarjetaCampana({ sitio }: { sitio: SitioVista }) {
             </a>
           )}
           {sitio.telefonoHref && (
-            <a className={CLASE_BTN_SECUNDARIO} href={sitio.telefonoHref}>
+            <a
+              className={
+                llamarEsUnica ? CLASE_BTN_PRIMARIO : CLASE_BTN_SECUNDARIO
+              }
+              href={sitio.telefonoHref}
+            >
               Llamar
             </a>
           )}

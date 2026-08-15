@@ -79,7 +79,8 @@ El schema canónico completo con ejemplo vive en `docs/MASTER_PROMPT.md` — ún
 | 6 | Caché de geocodificación versionada en git (`/scraper/cache/geocode.json`) | Nunca se geocodifica dos veces; corridas reproducibles; respeto real del límite de Nominatim | Repo algo más pesado |
 | 7 | `manual: true` como override humano permanente | En una emergencia el criterio humano corrige al scraper, nunca al revés | Lógica de merge con precedencia (manual > más reciente) que hay que probar bien |
 | 8 | Escritura atómica + orden determinista del JSON | El diff diario de git es la herramienta de revisión del mantenedor; tiene que ser legible | — |
-| 9 | `'unsafe-inline'` solo en `script-src` de la CSP | El export estático de Next inyecta scripts inline de bootstrap; los hashes son frágiles entre builds | Hueco conocido y documentado; el resto de la CSP queda cerrado |
+| 9 | `'unsafe-inline'` en `script-src` **y `style-src`** de la CSP | El export estático de Next inyecta scripts inline de bootstrap (hashes frágiles entre builds); `style-src` lo exige **Leaflet**, que aplica estilos inline a sus panes — endurecerlo rompe el mapa | Hueco conocido y documentado; el resto de la CSP queda cerrado |
+| 12 | `vercel.json` **duplicado** en la raíz y en `/web` (contenido idéntico) | Hallazgo alto de la auditoría W6: con *Root Directory* = `web`, Vercel lee el `vercel.json` de dentro de esa carpeta e **ignora el de la raíz** — los headers de seguridad no llegarían a producción. Con ambos, la CSP se aplica cualquiera sea la configuración del dashboard | Dos archivos que hay que mantener sincronizados: **si editas uno, edita el otro**. El `curl -I` del deploy es la verificación final |
 | 10 | Tipografía system stack (o una self-hosted subseteada) | Google Fonts violaría el invariante de privacidad y cuesta un request en 3G | Menos identidad tipográfica; el elemento distintivo del diseño la compensa |
 | 11 | Filtros sí pueden ir en la URL (`?cat=sangre`) | Compartir por WhatsApp una vista filtrada es distribución real de la ayuda | Ninguno — la ubicación del usuario queda explícitamente prohibida en la URL |
 
@@ -87,7 +88,7 @@ El schema canónico completo con ejemplo vive en `docs/MASTER_PROMPT.md` — ún
 
 Todo lo sensible vive y muere en el dispositivo del usuario:
 
-- **Existe:** coordenadas del usuario en estado de React (memoria); opcionalmente en `localStorage` **solo** si marca "recordar mi ubicación" (opt-in), borrable con "Borrar mis datos".
+- **Existe:** coordenadas del usuario en estado de React (memoria), **redondeadas a ~11 m en el instante mismo del fix** (ni el estado ni el disco ven una versión más precisa); opcionalmente en `localStorage` **solo** si marca "recordar mi ubicación" (opt-in), borrable con "Borrar mis datos". **Y en forma derivada e invertible en el DOM de la propia pestaña**: el riel de rumbo muestra distancia + rumbo hacia sitios de coordenada conocida, de donde la posición del usuario se puede reconstruir (±11 m). Nunca sale de la pestaña, pero cualquier futuro reportador de errores o captura de DOM debe evaluarse con ese dato a la vista (hallazgo de la auditoría W6).
 - **Prohibido por diseño:** enviarlas por red (no hay backend y `connect-src 'self'`), ponerlas en URL/history, loggearlas, pasarlas a terceros (no hay terceros: cero analytics, cero cookies, cero CDNs).
 - **Único request externo:** tiles de `tile.openstreetmap.org` (revelan el área del mapa visible al servidor de tiles — inherente a cualquier mapa web con tiles remotos; sin identidad del usuario).
 - **Excepción iniciada por el usuario:** "Cómo llegar" navega a Google Maps con la coordenada **del sitio** (dato público), nunca la del usuario. Link con `rel="noopener noreferrer"`; `Referrer-Policy: no-referrer` global.

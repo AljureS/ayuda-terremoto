@@ -1,0 +1,97 @@
+<!doctype html>
+<!--
+  Fuente de la imagen Open Graph (1200×630) → web/public/og.png
+  Se rasteriza con `node scripts/og.mjs` (Chrome headless). NO se sirve: este
+  archivo vive en scripts/, nunca en public/.
+
+  Spec de docs/DESIGN.md §6: fondo `superficie` blanco, "Mapa de Ayuda" en sans
+  700 enorme + una línea de propósito, fila de 10 puntos de categoría como
+  único adorno. Sin degradados. Legible en la miniatura de WhatsApp.
+  Todos los hex son tokens de DESIGN.md §9 — ninguno inventado.
+-->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+      body {
+        /* --color-superficie */
+        background: #ffffff;
+        /* mismo system stack del sitio (DESIGN.md §2) */
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+          sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 84px;
+        box-sizing: border-box;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* Único adorno: la fila de los 10 colores de categoría (DESIGN.md §5),
+         a 28 px — el mismo diámetro que los markers del mapa. */
+      .puntos {
+        display: flex;
+        gap: 18px;
+        margin-bottom: 52px;
+      }
+      .puntos i {
+        width: 28px;
+        height: 28px;
+        border-radius: 9999px;
+        display: block;
+      }
+      h1 {
+        margin: 0;
+        font-size: 132px;
+        line-height: 1.04;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        /* --color-tinta */
+        color: #1a2530;
+      }
+      .proposito {
+        margin: 26px 0 0;
+        font-size: 52px;
+        line-height: 1.25;
+        font-weight: 400;
+        /* --color-secundario */
+        color: #43525f;
+      }
+      /* Marca de país/fecha en la voz mono del sitio (DESIGN.md §2). */
+      .marca {
+        margin: 44px 0 0;
+        font-family: ui-monospace, "SF Mono", "Roboto Mono", "Cascadia Mono",
+          monospace;
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        /* --color-accion */
+        color: #0a5ca8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="puntos">
+      <i style="background: #3d5a76"></i>
+      <i style="background: #b0490b"></i>
+      <i style="background: #0a6e97"></i>
+      <i style="background: #a81e22"></i>
+      <i style="background: #0d7362"></i>
+      <i style="background: #7a4a21"></i>
+      <i style="background: #6d3fa5"></i>
+      <i style="background: #41499f"></i>
+      <i style="background: #59650e"></i>
+      <i style="background: #ac2166"></i>
+    </div>
+    <h1>Mapa de Ayuda</h1>
+    <p class="proposito">Encuentra el punto de ayuda más cercano.</p>
+    <p class="marca">Terremoto en Colombia · Agosto 2026</p>
+  </body>
+</html>
