@@ -176,17 +176,29 @@ export default function Acerca() {
           </p>
         </Seccion>
 
+        {/* Reescrita en W8: hasta ahora esta sección describía solo el camino
+            manual, porque era el único que existía. Con la actualización
+            automática diaria (GitHub Actions) el ritmo es real y se puede
+            prometer; el resto —correr a mano, el archivo, la recarga— sigue
+            siendo cierto y se conserva. El aviso de la portada dice lo mismo
+            en una línea; aquí está el mecanismo completo. */}
         <Seccion id="frecuencia" titulo="Cada cuánto se actualiza">
           <p>
-            No hay servidor ni base de datos. Los datos son un archivo que se
-            edita y se publica: cada cambio —un punto nuevo, un horario, un
-            estado que pasa a lleno— entra a mano o lo propone el recolector de
-            fuentes oficiales, y el sitio se vuelve a construir con ese archivo.
+            Una vez al día, un proceso automático revisa las fuentes, actualiza
+            el archivo de datos y vuelve a publicar el sitio. Corre solo, sin
+            que nadie tenga que acordarse.
           </p>
           <p>
-            Lo que ves es exactamente lo que había en la última construcción, y
-            no cambia solo mientras tienes la página abierta: recárgala para
-            traer lo último.
+            No hay servidor ni base de datos: los datos son un archivo que se
+            edita y se publica. Por eso quien mantiene el sitio puede correr ese
+            mismo proceso a mano cuando quiera, o editar el archivo directamente,
+            si llega un cambio que no puede esperar a mañana: un punto que se
+            llenó, un horario nuevo, una sede que cerró.
+          </p>
+          <p>
+            Lo que ves es exactamente lo que había en la última construcción del
+            sitio, y no cambia solo mientras tienes la página abierta: recárgala
+            para traer lo último.
           </p>
           <p>
             La regla que nos ponemos: un dato con más de{" "}

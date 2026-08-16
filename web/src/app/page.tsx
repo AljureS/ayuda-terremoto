@@ -16,7 +16,17 @@ export default function Home() {
   const datos = prepararDatos();
   return (
     <>
-      <Encabezado h1="Mapa de Ayuda" />
+      {/* El aviso de actualización (W8) va aquí, junto al banner de privacidad
+          y NO en el pie: es contexto para decidir a dónde ir. Por eso el pie
+          de ESTA página no repite el "hace N h" — ver PieDatos. */}
+      <Encabezado
+        h1="Mapa de Ayuda"
+        frescura={{
+          hace: datos.actualizadoHace,
+          horas: datos.actualizadoHoras,
+          iso: datos.actualizadoIso,
+        }}
+      />
       <main className="flex-1">
         <ListaFiltrada
           sitios={datos.geograficos}
@@ -24,7 +34,7 @@ export default function Home() {
           nCampanas={datos.campanas.length}
         />
       </main>
-      <PieDatos actualizadoHace={datos.actualizadoHace} />
+      <PieDatos />
     </>
   );
 }

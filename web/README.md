@@ -556,6 +556,188 @@ pasa a `currentColor`— lo ratificó el usuario antes de empezar. Nada de
   (§7), no una acción de destino, y §7 le fija 44 px sin fijarle peso visual.
   Decisión de `design-director`, no de esta fase.
 
+## Decisiones de W8 (aviso de actualización + rótulo del filtro de estado)
+
+Dos cambios de **copy** con su lógica mínima. Nada de `/data`, `/scraper`,
+`/docs`, `.github` ni los `vercel.json` se tocó. Las dos cadenas nuevas están
+marcadas para ratificación de `design-director`.
+
+### 1. Aviso de actualización en la portada
+
+- **Dónde: en el encabezado, pegado al banner de privacidad.** Los dos son
+  avisos permanentes con la misma forma (ⓘ + texto secundario) y enmarcan la
+  lista sin competir con ella. La otra sede candidata —junto al conteo
+  honesto— se descartó por una razón **medible**: en móvil, la vista mapa
+  esconde ese bloque entero (`enMapaMovil ? "hidden lg:block"` en
+  `ListaFiltrada`), así que el aviso desaparecería justo cuando la persona
+  está eligiendo un punto en el mapa. En el encabezado se ve en las dos
+  vistas, en móvil y escritorio, no toca el `aria-live` del conteo y **cuesta
+  0 B de JS** (server component puro; el conteo vive dentro del componente
+  cliente).
+- **El texto se deriva del dato, nunca de una constante.** `prepararDatos()`
+  expone `actualizadoHoras` además del `actualizadoHace` de siempre, y el
+  aviso elige la frase: con el archivo dentro de la promesa recita el ritmo
+  (`"; la última fue hace 3 h"`), y por encima de las 24 h antepone la
+  realidad al ritmo (`", pero la última fue hace 3 días"`). No hay redacción
+  posible de ese componente que diga "actualizado hoy" sobre un archivo viejo.
+  **Con el dataset de hoy** (sello `2026-08-14T19:16:17-05:00`) el aviso ya
+  sale en la segunda forma: la build midió **26 h**.
+- **`horasDesde()` es hermano de `haceTexto()`, no un refactor de él**
+  (`lib/texto.ts`): `haceTexto` produce el "hace N h" de las 67 tarjetas y de
+  los pies; compartir tres líneas no valía poner en juego texto ya verificado.
+- **Sin mono** (DESIGN.md §2: "si aparece en prosa, es un error de
+  implementación") y **sin `role="alert"`**: es contexto permanente, no una
+  interrupción. El ⓘ va `aria-hidden` y no es canal único — el texto se lee
+  entero sin él (verificado quitando los `[aria-hidden]` del DOM).
+- **`<time dateTime={ISO}>`** envuelve el "hace N h": el texto visible es
+  relativo y se congela en la build; el atributo lleva el instante absoluto,
+  que no envejece. Cuesta 0 B.
+- **El pie de la portada ya no repite el "hace N h"** — es la repetición torpe
+  que había que resolver, y se conserva la mención de arriba, donde la persona
+  decide. `actualizadoHace` pasó a opcional en `PieDatos`; `/campanas`,
+  `/acerca` y la 404 lo siguen pasando (ahí es la única mención de frescura).
+  Esa línea del pie **no** está en la tabla de §6, así que quitarla de una
+  página es implementación reversible, no desviación del sistema.
+- **Desviación declarada de §6:** la cadena canónica es "Verifica el punto
+  antes de desplazarte: **los horarios y las necesidades cambian rápido**." En
+  el aviso va sin la cola. Razón medida, no estética: con ella el aviso ocupa
+  **5 líneas (110 px) a 320 px** y 4 (88 px) a 390, y empuja la primera
+  tarjeta 22 px más abajo en ambos. La orden está entera en la mitad que se
+  conserva y la frase completa sigue literal en `/acerca`, que es a quien §6
+  se la asigna.
+
+### 2. El rótulo del filtro de estado
+
+`"Incluir llenos y cerrados"` → **`"Incluir N punto(s) que no recibe(n)"`**
+(sin ninguno: `"Incluir los puntos que no reciben"`). Sale de una revisión del
+usuario sobre la UI corriendo — *"¿qué significa ese input? ¿que está abierto
+y funcionando el lugar?"*—. Las tres fallas y su arreglo:
+
+1. **No decía qué escondía.** Ahora el número lo dice, y de paso revela que la
+   lista de arriba es la de los que sí reciben. El conteo respeta ciudad +
+   chips + búsqueda (mismo predicado `pasaFiltroFino` que alimenta la lista),
+   así que nunca promete puntos que al marcar la casilla no aparecen: con
+   `?cat=sangre` no hay ningún no-activo y el rótulo cae solo a su forma
+   genérica.
+2. **Nombraba dos de los tres estados que oculta** (`pausado` quedaba fuera).
+   Ahora es una **regla y no un enumerado** —la forma que DESIGN.md §10 pide—:
+   "que no recibe" cubre `lleno`, `pausado`, `cerrado` y cualquier estado
+   futuro.
+3. **Competía con "abierto/cerrado".** El `estado` contesta "¿sigue
+   recibiendo?", no "¿está abierto ahora?" —eso es el `horario`, que solo
+   tienen 17 de 204 sitios—. "Recibir" es además el verbo de los chips
+   ("Lleno — ya no recibe", "Pausado — no recibe por ahora"): el rótulo es su
+   generalización exacta, no vocabulario nuevo.
+
+El `<label>` envolvente conserva su target de **44 px** y `?ver=todos` sigue
+funcionando igual (verificado: casilla marcada, 68 tarjetas, conteo "68 puntos
+en Bogotá").
+
+**El conteo honesto no se tocó, y la decisión se deja abierta al director.** El
+rótulo dice qué revelaría la casilla; la mitad positiva —*la lista que estás
+viendo es la de los que sí reciben*— queda implícita y nunca escrita. Cambiar
+el h2 es la forma de decirla, pero es cadena fijada en §3/§4C, así que va como
+opción costeada en vez de como cambio unilateral. Medido sobre el h2 real
+(mono 15/22):
+
+| Variante | 320 px | 390 px |
+|---|---|---|
+| `67 puntos en Bogotá` (actual) | 1 línea | 1 línea |
+| **`67 puntos reciben en Bogotá`** | **1 línea, +0 px** | **1 línea, +0 px** |
+| `67 puntos reciben ayuda en Bogotá` | 2 líneas, +22 px | 1 línea, +0 px |
+| `67 puntos que siguen recibiendo en Bogotá` | 2 líneas, +22 px | 2 líneas, +22 px |
+| `12 de 67 puntos reciben en Bogotá` (con filtros) | 2 líneas, +22 px | 1 línea, +0 px |
+
+La barata es "reciben": **0 px** en el estado por defecto y +22 px a 320 px solo
+cuando hay filtros finos. "Reciben" intransitivo no es vocabulario nuevo —es el
+verbo de los chips— y "puntos que reciben ayuda" ya es la frase de `/acerca`.
+
+### Dos cosas que este cambio NO puede resolver solo
+
+- **La promesa del ritmo depende de la GitHub Action, que aún no existe.**
+  "Esta lista se actualiza sola una vez al día" —y el párrafo nuevo de
+  `/acerca`— afirman un ritmo que se vuelve cierto cuando aterrice el workflow
+  que otro agente está montando. **Si este cambio se mergea primero, la portada
+  afirma algo que todavía no ocurre.** Es una dependencia de orden de merge, no
+  un defecto del copy: el texto ya está escrito para que el número real lo
+  desmienta solo (rama de "dato viejo") si la Action falla o se apaga.
+- **El "hace N h" se congela en la build, y su desfase tiene tope.** El número
+  es exacto en el instante de construir; quien abra la página 20 h después lee
+  un número 20 h viejo. La rama de `> 24 h` **no** atrapa ese caso —compara
+  sello contra build, no sello contra lectura—, así que el diseño de dos ramas
+  no debe leerse como "el aviso no puede equivocarse sobre la frescura". Lo que
+  sí se puede afirmar: con la publicación diaria el desfase queda acotado a
+  ~24 h, y el `<time datetime>` lleva el instante absoluto, que no envejece.
+  Corregirlo del todo pediría un reloj en el cliente, que W2 descartó por
+  decisión documentada y que costaría JS donde este cambio cuesta 72 B.
+
+### 3. `/acerca` — "Cada cuánto se actualiza"
+
+Reescrita: antes describía solo el camino manual, porque era el único que
+existía. Ahora dice el ritmo automático diario, que la persona mantenedora
+puede correr el mismo proceso a mano, y que lo que se ve es lo que había en la
+última construcción (recargar trae lo último). **La regla de las 72 h se
+conserva literal** — sigue siendo cierta (`/validate-data`).
+
+### Evidencia de W8
+
+- **Build limpia**, sin warnings de export. Peso medido a mano con gzip (el
+  método que reproduce las cifras de W7): first-load de `/` **109,66 → 109,73
+  KB gz (+72 B)**; HTML de `/` +246 B; `/acerca` +113 B; `/campanas` y la 404,
+  **0 B**. Total de JS estático del sitio +72 B. Presupuesto ≤ 180 KB.
+- **Las dos ramas del aviso, probadas con fixtures** en un clon del repo en el
+  scratchpad (`/data` intacto): sello de **3 h** → *"…una vez al día; la última
+  fue hace 3 h."*; sello de **80 h** → *"…una vez al día, **pero** la última
+  fue hace 3 días."* Con el dato real (26 h) sale la segunda: el aviso no
+  puede afirmar el ritmo cuando el archivo lo desmiente.
+- **Render real** (Chrome headless, CDP) a 195 / 320 / 360 / 390 / 1280 px:
+  **cero desborde horizontal** en los cinco, en las dos ramas. Las cifras van
+  por rama, porque son distintas y la que se ve en producción es la primera:
+
+  | | aviso a 320 | 1.ª tarjeta a 320 (fold 568) | 1.ª tarjeta a 390 (fold 844) | a 1280 |
+  |---|---|---|---|---|
+  | *baseline* | — | 533 | 509 | 539 |
+  | **rama normal** (dato del día) | 3 líneas / 66 px | **607** | **583** (261 px de tarjeta visibles) | **569** |
+  | rama de dato viejo | 4 líneas / 88 px | 629 | 583 | 569 |
+
+  La **rama normal es la de producción**: la Action publica y Vercel construye
+  enseguida, así que la edad en build es ≈ 0. La rama larga solo aparece cuando
+  se reconstruye sin datos nuevos — que es justo cuando hay que decirlo.
+  **Límite honesto:** a 320×568 —iPhone SE de 1.ª gen— la primera tarjeta queda
+  bajo el pliegue; en el baseline asomaba 35 px de sus 366. Cualquier aviso
+  permanente cuesta ese asomo: el margen era de 35 px y dos líneas ya valen 44.
+  En la pantalla que el contrato describe (gama media, 360–390 px) la tarjeta
+  sigue holgadamente en la primera pantalla.
+- **La rama plural del rótulo, probada** (el dato real tiene un solo no-activo,
+  así que no se ejercitaba sola): fixture con 4 no-activos en Bogotá —uno de
+  cada estado, `pausado` incluido— renderiza **"Incluir 4 puntos que no
+  reciben"**, 242 px en **una línea** a 320 px, target de **44 px** intacto y
+  sin desborde ni siquiera a 195 px. Las tres formas del rótulo (0, 1, N)
+  quedan verificadas.
+- **Ambas cadenas están en el HTML crudo**, no solo tras hidratar: `grep` sobre
+  `out/index.html` encuentra el aviso y `"que no recibe"` (el rótulo vive en un
+  componente cliente, así que no era obvio). El camino sin JavaScript conserva
+  los dos textos; la cadena vieja no aparece en ningún lado.
+- **Contraste medido sobre el fondo real** (estilos computados del DOM, no
+  estimados): prosa `#43525F` sobre `#EFF2F5` = **7,16**; imperativo `#1A2530`
+  sobre el mismo fondo = **13,83**. Son las dos filas que DESIGN.md §1 ya trae
+  medidas: el aviso **no introduce ni un par de color nuevo** ni una superficie
+  nueva (es texto sobre el fondo de página; un recuadro tintado habría leído
+  como alarma y habría exigido un token que este territorio no puede escribir).
+- **Lighthouse móvil, baseline y W8 medidos igual** (3 corridas cada uno,
+  sirviendo `out/` con gzip y los 4 headers de `/vercel.json` — sin gzip el
+  número se hunde a 79 y no describe lo que Vercel sirve):
+  **performance 99 · accesibilidad 100 · best-practices 100 · SEO 100** en los
+  dos, con FCP 907–909 ms, LCP 2004–2007 ms, TBT 0 y CLS 0,000. El 99 es el
+  estado que W7 dejó declarado; **W8 no lo mueve** (LCP a 3 ms del baseline).
+- **Sin regresiones:** el diff del texto visible de `/` contra el baseline son
+  exactamente las tres líneas de este cambio (aviso +, rótulo modificado, eco
+  del pie −); el conjunto de hosts externos de `out/` es **idéntico** (48); 0
+  contactos personales en claro (los 7 blobs ofuscados se decodificaron y se
+  buscó cada nombre y cada número en `out/`: 0 apariciones); el chunk de
+  Leaflet (`d0deef33.*.js`) **no** aparece en el HTML de ninguna ruta; 0
+  violaciones de CSP con los headers reales.
+
 ## Pendiente de fases siguientes
 
 - **W6** (QA + privacidad): Lighthouse móvil, matriz de edge cases y

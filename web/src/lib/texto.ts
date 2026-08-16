@@ -33,6 +33,21 @@ export function fechaBogota(iso: string): string {
 }
 
 /**
+ * Horas transcurridas desde `iso` (0 si la fecha es inválida o futura).
+ *
+ * Vive al lado de `haceTexto()` y NO dentro de él a propósito (W8): esa
+ * función produce el "hace N h" de las 67 tarjetas y de los dos pies, y
+ * refactorizarla para compartir tres líneas habría puesto en juego texto ya
+ * verificado a cambio de nada. Aquí solo se necesita el número crudo, para que
+ * el aviso de la portada decida QUÉ frase decir (ver `AvisoActualizacion`).
+ */
+export function horasDesde(iso: string, ahora: Date): number {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return 0;
+  return Math.max(0, Math.floor((ahora.getTime() - t) / 3_600_000));
+}
+
+/**
  * "hace 3 h" / "hace 2 días" (microcopy DESIGN.md §6), calculado EN BUILD
  * respecto del momento de la build — en W2 no hay relojes en el cliente.
  */

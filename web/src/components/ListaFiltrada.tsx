@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   CLAVE_FILTROS,
@@ -215,33 +215,53 @@ export function ListaFiltrada({
 
   const qNorm = sinTildes(q.trim());
 
+  /** Sitios de la ciudad elegida, sin mirar el estado todavía. */
+  const deLaCiudad = useMemo(
+    () => sitios.filter((s) => ciudad === TODAS || s.ciudadSlug === ciudad),
+    [sitios, ciudad],
+  );
+
   // Sitios de la ciudad elegida que pasan el filtro de estado (la base del
   // conteo honesto "X de Y").
   const base = useMemo(
-    () =>
-      sitios.filter(
-        (s) =>
-          (ciudad === TODAS || s.ciudadSlug === ciudad) &&
-          (verTodos || s.estado === "activo"),
-      ),
-    [sitios, ciudad, verTodos],
+    () => deLaCiudad.filter((s) => verTodos || s.estado === "activo"),
+    [deLaCiudad, verTodos],
+  );
+
+  /** Categorías + búsqueda libre: los filtros "finos", los que hacen que el
+   * conteo diga "X de Y". Extraído a función propia (W8) porque el rótulo del
+   * filtro de estado necesita el MISMO criterio para contar cuántos puntos
+   * revelaría: un número que no respetara los chips ni la búsqueda prometería
+   * puntos que al marcar la casilla no aparecen. */
+  const pasaFiltroFino = useCallback(
+    (s: SitioVista) => {
+      if (cats.size && !s.categorias.some((c) => cats.has(c))) return false;
+      if (
+        qNorm &&
+        !sinTildes(s.nombre).includes(qNorm) &&
+        !sinTildes(s.direccion).includes(qNorm) &&
+        !sinTildes(s.localidad).includes(qNorm)
+      ) {
+        return false;
+      }
+      return true;
+    },
+    [cats, qNorm],
   );
 
   const visibles = useMemo(
+    () => base.filter(pasaFiltroFino),
+    [base, pasaFiltroFino],
+  );
+
+  /** Cuántos puntos deja fuera el filtro de estado ahora mismo: exactamente
+   * los que aparecerían al marcar la casilla. El dato de hoy es 1 en Bogotá
+   * (un `lleno`), pero el número es del conjunto filtrado vigente. */
+  const noReciben = useMemo(
     () =>
-      base.filter((s) => {
-        if (cats.size && !s.categorias.some((c) => cats.has(c))) return false;
-        if (
-          qNorm &&
-          !sinTildes(s.nombre).includes(qNorm) &&
-          !sinTildes(s.direccion).includes(qNorm) &&
-          !sinTildes(s.localidad).includes(qNorm)
-        ) {
-          return false;
-        }
-        return true;
-      }),
-    [base, cats, qNorm],
+      deLaCiudad.filter((s) => s.estado !== "activo" && pasaFiltroFino(s))
+        .length,
+    [deLaCiudad, pasaFiltroFino],
   );
 
   /**
@@ -412,7 +432,32 @@ export function ListaFiltrada({
               );
             })}
           </ul>
-          {/* Filtro de estado: por defecto SOLO activo (contrato). */}
+          {/*
+            Filtro de estado: por defecto SOLO activo (contrato).
+
+            EL RÓTULO, reescrito en W8 tras una revisión del usuario sobre la
+            UI corriendo ("¿qué significa ese input? ¿que está abierto y
+            funcionando el lugar?"). "Incluir llenos y cerrados" fallaba en
+            tres cosas y las tres se arreglan aquí:
+
+            1) No decía qué escondía. Ahora el número lo dice —"Incluir 1 punto
+               que no recibe"—, y de paso revela que la lista de arriba es la
+               de los que SÍ reciben. El conteo sale del conjunto filtrado
+               vigente, así que nunca promete puntos que no van a aparecer.
+            2) Nombraba dos de los tres estados que oculta (`pausado` quedaba
+               fuera del texto). Ahora es una REGLA, no un enumerado —la forma
+               que DESIGN.md §10 pide expresamente—: "que no recibe" cubre
+               `lleno`, `pausado`, `cerrado` y cualquier estado futuro.
+            3) Competía con "abierto/cerrado". El `estado` contesta "¿sigue
+               recibiendo?", no "¿está abierto ahora?" —eso es el `horario`, y
+               solo 17 de 204 sitios lo tienen—. "Recibir" es además el verbo
+               que ya usan los chips ("Lleno — ya no recibe", "Pausado — no
+               recibe por ahora"): el rótulo es su generalización exacta, no
+               vocabulario nuevo.
+
+            El `<label>` envolvente conserva su target de 44 px y `ver=todos`
+            en la URL sigue funcionando igual: solo cambia el texto.
+          */}
           <label className="mt-1 flex min-h-tap w-fit cursor-pointer items-center gap-2.5 lg:mt-0">
             <input
               type="checkbox"
@@ -420,7 +465,13 @@ export function ListaFiltrada({
               checked={verTodos}
               onChange={(e) => setVerTodos(e.target.checked)}
             />
-            <span className="text-sec">Incluir llenos y cerrados</span>
+            <span className="text-sec">
+              {noReciben === 0
+                ? "Incluir los puntos que no reciben"
+                : noReciben === 1
+                  ? "Incluir 1 punto que no recibe"
+                  : `Incluir ${noReciben} puntos que no reciben`}
+            </span>
           </label>
         </div>
 

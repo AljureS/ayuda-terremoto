@@ -24,7 +24,7 @@ import {
   telHref,
 } from "./contacto";
 import { hrefDonar } from "./donar";
-import { fechaBogota, haceTexto, slugCiudad } from "./texto";
+import { fechaBogota, haceTexto, horasDesde, slugCiudad } from "./texto";
 import type {
   Categoria,
   CiudadOpcion,
@@ -173,6 +173,15 @@ export interface DatosPreparados {
   totalConCoords: number;
   /** "hace X h" del campo `actualizado` del dataset, calculado en build. */
   actualizadoHace: string;
+  /** El mismo dato en horas crudas: el aviso de la portada elige con él si
+   * puede recitar el ritmo diario o si tiene que decir que no se cumplió
+   * (W8). El texto se DERIVA del dato real; nunca hay una constante que
+   * afirme una frescura que el archivo no tiene. */
+  actualizadoHoras: number;
+  /** Sello ISO del dataset, para el `datetime` del `<time>` del aviso: el
+   * texto visible es relativo ("hace 3 h") y el atributo lleva el instante
+   * absoluto, que no envejece. */
+  actualizadoIso: string;
   /** Fecha exacta del dataset en hora de Bogotá (para "Acerca de"). */
   actualizadoFecha: string;
   /**
@@ -309,6 +318,8 @@ export function prepararDatos(): DatosPreparados {
     totalConCoords: datos.sitios.filter((s) => s.lat != null && s.lng != null)
       .length,
     actualizadoHace: haceTexto(datos.actualizado, AHORA_BUILD),
+    actualizadoHoras: horasDesde(datos.actualizado, AHORA_BUILD),
+    actualizadoIso: datos.actualizado,
     actualizadoFecha: fechaBogota(datos.actualizado),
     sitiosPorFuente,
   };
