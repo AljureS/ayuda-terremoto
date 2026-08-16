@@ -1,0 +1,246 @@
+name: Actualizar datos
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Actualización automática diaria de /data/sitios.json.
+#
+# Esto es lo que hace CIERTA la promesa de la web ("los datos se actualizan
+# cada 24 horas"): corre el mismo pipeline que la persona mantenedora corre a
+# mano (`cd scraper && npm run build:data`), y si algo cambió, lo commitea a
+# main. El push a main dispara el redeploy de Vercel — no hace falta nada más.
+#
+# La automatización NO reemplaza el control humano: `npm run build:data` a mano
+# sigue funcionando igual, y todo registro con `manual: true` es intocable para
+# el pipeline (ver el paso "Verificar el invariante manual:true").
+#
+# Documentación operativa (cómo dispararlo, cómo apagarlo, qué hacer si falla):
+# scraper/README.md → sección "Actualización automática diaria".
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  # HORARIO: el cron de GitHub Actions es SIEMPRE en UTC. Bogotá es UTC−05:00
+  # todo el año (Colombia no tiene horario de verano), así que la conversión es
+  # fija: hora Bogotá = hora UTC − 5.
+  #
+  #   '20 10 * * *'  =  10:20 UTC  =  05:20 a. m. en Bogotá, todos los días.
+  #
+  # Por qué esa hora: temprano en la mañana, para que el dato del día ya esté
+  # fresco cuando la gente sale a donar (7–9 a. m.), y captura el estado final
+  # del día anterior de los artículos de bogota.gov.co (que se actualizan
+  # in-place). Por qué el minuto 20 y no en punto: el planificador de GitHub se
+  # congestiona en :00 y retrasa las corridas. El cron de Actions es "mejor
+  # esfuerzo": puede demorarse algunos minutos, nunca se adelanta.
+  schedule:
+    - cron: '20 10 * * *'
+
+  # Botón "Run workflow" en la pestaña Actions de GitHub, para dispararlo a
+  # mano sin esperar al cron (p. ej. después de una actualización grande de la
+  # hoja comunitaria).
+  workflow_dispatch:
+
+# PERMISOS MÍNIMOS: solo escribir en el repo (commit + push de los datos).
+# Nada de packages, issues, pull-requests ni id-token. Se usa el GITHUB_TOKEN
+# que GitHub inyecta solo: este workflow no necesita ningún secreto adicional.
+permissions:
+  contents: write
+
+# Dos corridas no se pisan: si alguien dispara una a mano mientras corre la del
+# cron, la segunda ESPERA a que termine la primera (cancel-in-progress: false).
+# Cancelar a media corrida no corrompería los datos —toda escritura del pipeline
+# es zod → orden determinista → atómica— pero sí dejaría trabajo a medias.
+concurrency:
+  group: actualizar-datos
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    name: Pipeline de datos
+    runs-on: ubuntu-latest
+    # El pipeline tarda ~25 s en un día normal. El techo alto cubre el caso de
+    # muchas direcciones nuevas por geocodificar (Nominatim a 1 req/s), y evita
+    # que una llamada de red colgada consuma minutos de Actions hasta el default
+    # de 6 horas.
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        # `shell: bash` = `bash --noprofile --norc -eo pipefail`. El `pipefail`
+        # es deliberado: sin él, `npm run build:data | tee` devolvería el código
+        # de salida de `tee` (siempre 0) y un pipeline ROTO se vería VERDE.
+        shell: bash
+
+    steps:
+      # ── 1 · Código ────────────────────────────────────────────────────────
+      - name: Checkout de main
+        uses: actions/checkout@v4
+        # persist-credentials (default: true) deja el GITHUB_TOKEN configurado
+        # como credencial de git, que es lo que permite el push del final.
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: scraper/package-lock.json
+
+      - name: Instalar dependencias del scraper
+        working-directory: scraper
+        run: npm ci
+
+      # ── 2 · Fotografía de los registros manual:true ANTES de tocar nada ───
+      # El invariante central del proyecto: el pipeline JAMÁS modifica, agrega
+      # ni elimina un registro con `manual: true`. `merge.ts` lo garantiza por
+      # construcción y `build-data.ts` lo verifica antes de escribir, pero en CI
+      # nadie está mirando en vivo: aquí se comprueba otra vez, de forma
+      # independiente, comparando el antes y el después con git.
+      #
+      # La base de comparación se toma de `git show HEAD:` —no del archivo en
+      # disco— para que sea, por construcción, exactamente el estado sobre el
+      # que se calculará el commit.
+      - name: Fotografiar los registros manual:true (antes)
+        run: |
+          mkdir -p "$RUNNER_TEMP/invariante"
+          cat > "$RUNNER_TEMP/invariante/extraer-manuales.mjs" <<'FIN_DEL_SCRIPT'
+          // Extrae los registros manual:true de un sitios.json en forma
+          // canónica (ordenados por id, claves ordenadas) para poder
+          // compararlos con `diff`. No modifica nada.
+          import { readFileSync } from 'node:fs';
+          const canonico = (v) =>
+            Array.isArray(v)
+              ? v.map(canonico)
+              : v && typeof v === 'object'
+                ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canonico(v[k])]))
+                : v;
+          const archivo = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          const manuales = (archivo.sitios ?? [])
+            .filter((s) => s.manual === true)
+            .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+          process.stdout.write(JSON.stringify(canonico(manuales), null, 2) + '\n');
+          FIN_DEL_SCRIPT
+          git show HEAD:data/sitios.json > "$RUNNER_TEMP/invariante/sitios-antes.json"
+          node "$RUNNER_TEMP/invariante/extraer-manuales.mjs" \
+            "$RUNNER_TEMP/invariante/sitios-antes.json" \
+            > "$RUNNER_TEMP/invariante/manuales-antes.json"
+          echo "Registros manual:true en HEAD: $(grep -c '"manual": true' "$RUNNER_TEMP/invariante/manuales-antes.json" || true)"
+
+      # ── 3 · El pipeline completo ──────────────────────────────────────────
+      # import:sheet → scrape → merge con dedupe → geocode → validate.
+      # Es all-or-nothing por fase y NO lleva `continue-on-error`: si muere,
+      # el job muere aquí y no se commitea absolutamente nada.
+      #
+      # VOLUMEN DE RED POR CORRIDA (ética de scraping del proyecto — los delays
+      # y el User-Agent viven en el código del scraper, este workflow no puede
+      # saltárselos):
+      #   · Hoja comunitaria (import:sheet): ≤ 8 requests a docs.google.com
+      #     (4 pestañas × export, más gviz solo si export falla), ≥ 2 s entre
+      #     requests. Si Google no responde desde la IP del runner, se usa el
+      #     snapshot CSV versionado en /data/import/ y el pipeline sigue.
+      #   · Fuentes oficiales (scrape): 6 requests — 2 robots.txt
+      #     (bogota.gov.co, cruzrojacolombiana.org) + 4 artículos, ≥ 2 s entre
+      #     requests al mismo dominio (más si su robots.txt pide Crawl-delay),
+      #     User-Agent: MapaAyudaBogota/1.0 (contacto: saidsimon2@gmail.com).
+      #   · Nominatim (geocode): 0 requests en un día normal — solo direcciones
+      #     nuevas que no estén en la caché versionada, a ≤ 1 req/s (1100 ms).
+      # Total en un día típico: ~14 requests repartidos en tres dominios, una
+      # vez al día. Menos tráfico que una sola persona leyendo esas páginas.
+      - name: Pipeline completo (npm run build:data)
+        working-directory: scraper
+        run: |
+          set -euo pipefail
+          npm run build:data 2>&1 | tee "$RUNNER_TEMP/build-data.log"
+
+      # ── 4 · Los dos gates, ANTES de commitear ─────────────────────────────
+      - name: Verificar el invariante manual:true
+        run: |
+          node "$RUNNER_TEMP/invariante/extraer-manuales.mjs" data/sitios.json \
+            > "$RUNNER_TEMP/invariante/manuales-despues.json"
+          if diff -u "$RUNNER_TEMP/invariante/manuales-antes.json" \
+                     "$RUNNER_TEMP/invariante/manuales-despues.json"; then
+            echo "✓ Invariante intacto: los registros manual:true están byte a byte iguales."
+          else
+            echo "::error::INVARIANTE VIOLADA — la corrida agregó, cambió o eliminó un registro manual:true. No se commitea nada; decide la persona mantenedora."
+            exit 1
+          fi
+
+      - name: Validar el schema (npm run validate)
+        working-directory: scraper
+        run: npm run validate
+
+      # ── 5 · ¿Hay algo que commitear? ──────────────────────────────────────
+      # El pipeline es idempotente: la mayoría de los días no cambia nada y el
+      # workflow termina en verde sin commit.
+      #
+      # `git add -A` + `git diff --cached --quiet` en vez de `git diff --quiet`
+      # a secas: son equivalentes para archivos ya versionados, pero además
+      # detecta archivos NUEVOS (p. ej. el CSV de una pestaña nueva de la hoja),
+      # que `git diff` no ve por ser untracked. Deja todo listo para el commit.
+      - name: ¿Cambió algo?
+        id: cambios
+        run: |
+          git add -A -- data scraper/cache
+          if git diff --cached --quiet -- data scraper/cache; then
+            echo "hay_cambios=false" >> "$GITHUB_OUTPUT"
+            echo "Sin cambios en data/ ni scraper/cache/ — no hay nada que commitear (el pipeline es idempotente)."
+          else
+            echo "hay_cambios=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat -- data scraper/cache
+          fi
+
+      # ── 6 · Commit y push (solo si cambió algo) ───────────────────────────
+      # Este push a main es el que dispara el redeploy de Vercel: es el último
+      # eslabón de la promesa de 24 horas.
+      - name: Commit y push
+        id: commit
+        if: steps.cambios.outputs.hay_cambios == 'true'
+        env:
+          URL_CORRIDA: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          FECHA="$(TZ=America/Bogota date +%F)"
+          RESUMEN="$(node -e 'const d = JSON.parse(require("node:fs").readFileSync("data/sitios.json", "utf8")); console.log(d.sitios.length + " sitios · registros manual:true intactos: " + d.sitios.filter((s) => s.manual).length);')"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --file - <<FIN_DEL_MENSAJE
+          datos: actualización automática $FECHA
+
+          Corrida diaria del pipeline completo (import:sheet → scrape → merge
+          con dedupe → geocode → validate) desde
+          .github/workflows/actualizar-datos.yml.
+
+          $RESUMEN
+          Log de la corrida: $URL_CORRIDA
+          FIN_DEL_MENSAJE
+          # Si alguien empujó a main mientras corría el pipeline, este push
+          # falla (non-fast-forward) y el job queda en rojo SIN commitear nada
+          # remoto — que es lo correcto: el merge se calculó sin conocer ese
+          # cambio. La siguiente corrida parte del estado nuevo. Ver el README.
+          git push
+
+      # ── 7 · Resumen legible en la pestaña Actions ─────────────────────────
+      # `always()` para que también se vea cuando el pipeline falló. Este paso
+      # no puede tumbar el job: todo va guardado por condicionales.
+      - name: Resumen de la corrida
+        if: always()
+        env:
+          HAY_CAMBIOS: ${{ steps.cambios.outputs.hay_cambios }}
+          RESULTADO_COMMIT: ${{ steps.commit.outcome }}
+        run: |
+          {
+            echo "## Actualización de datos — $(TZ=America/Bogota date '+%Y-%m-%d %H:%M') (Bogotá)"
+            if [ "${RESULTADO_COMMIT:-}" = 'success' ]; then
+              echo "Hubo cambios: se commitearon y se empujaron a main (Vercel redeploya solo)."
+            elif [ "${RESULTADO_COMMIT:-}" = 'failure' ]; then
+              echo "Hubo cambios pero **el commit o el push falló**: nada llegó a main. Lo más común es que alguien empujara a main durante la corrida — vuelve a dispararlo a mano."
+            elif [ "${HAY_CAMBIOS:-}" = 'false' ]; then
+              echo "Sin cambios: no se commiteó nada. Los datos de ayer siguen siendo los vigentes."
+            else
+              echo "La corrida no llegó al chequeo de cambios: **algo falló antes**. Nada se commiteó."
+            fi
+            echo ""
+            echo "### Cola del reporte del pipeline"
+            if [ -f "$RUNNER_TEMP/build-data.log" ]; then
+              echo '```'
+              tail -n 120 "$RUNNER_TEMP/build-data.log"
+              echo '```'
+            else
+              echo "_El pipeline no alcanzó a producir reporte; revisa los logs del paso que falló._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

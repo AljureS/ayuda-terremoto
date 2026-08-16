@@ -12,6 +12,8 @@ Recolecta e importa puntos de ayuda (terremoto de Colombia, 10-ago-2026) y escri
 | `npm run scrape` | ✅ funcional (F4) | Scrapea las fuentes oficiales de `src/sources.ts` (cheerio, robots.txt, ≥2 s entre requests) y escribe el **staging** `cache/scraped.json`. **No toca `/data/sitios.json`.** Ver sección abajo. |
 | `npm run build:data` | ✅ funcional (F5) | Pipeline completo: importar → scrapear → **merge con dedupe** → geocodificar → validar, con reporte consolidado. Ver sección abajo. |
 
+Además de estos comandos, `build:data` corre **solo, una vez al día** (5:20 a. m. de Bogotá) desde `.github/workflows/actualizar-datos.yml`, y commitea los cambios a `main` — ver [Actualización automática diaria](#actualización-automática-diaria-github-actions). Correrlo a mano sigue siendo válido y necesario cuando hay prisa.
+
 ## Geocodificación (`npm run geocode`, F3)
 
 Nominatim (OpenStreetMap) con las reglas del contrato: **máximo 1 request/segundo** (espera ≥1100 ms entre requests), User-Agent identificable con correo de contacto, y `countrycodes=co`.
@@ -127,6 +129,66 @@ propósito (geocode.ts no es importable: ejecuta main() al cargarse).
   revierte en la misma corrida (la hoja y la fuente oficial describen el mismo
   sitio con palabras distintas; gana la oficial). El diff de git al final es
   la verdad.
+
+## Actualización automática diaria (GitHub Actions)
+
+`.github/workflows/actualizar-datos.yml` corre **este mismo pipeline** una vez al día en los servidores de GitHub y, si algo cambió, lo commitea a `main`. Como el push a `main` dispara el redeploy de Vercel, ese workflow es lo que hace **cierta** la promesa que la web le hace a la gente ("los datos se actualizan cada 24 horas"): antes de que existiera, los datos solo se actualizaban cuando alguien se acordaba de correr el comando.
+
+> **La automatización no reemplaza el control humano: lo complementa.** Puedes seguir corriendo `npm run build:data` a mano cuando quieras, y esa sigue siendo la vía rápida cuando la hoja comunitaria recibe una tanda grande de puntos y no quieres esperar a mañana. Y si editas un sitio a mano (`/estado`, `/nuevo-sitio`, o el JSON directo) y haces push, **la corrida del día siguiente lo respeta**: el pipeline jamás toca un registro con `manual: true`, y el workflow lo vuelve a verificar antes de commitear.
+
+| | |
+|---|---|
+| **Cuándo corre** | Todos los días a las **5:20 a. m. de Bogotá** (`cron: '20 10 * * *'` = 10:20 UTC; el cron de GitHub siempre es UTC y Bogotá es UTC−5 todo el año). Temprano a propósito: el dato del día queda fresco antes de que la gente salga a donar. El planificador de GitHub es de "mejor esfuerzo": puede retrasarse algunos minutos, nunca se adelanta. |
+| **Qué corre** | `npm ci` + `npm run build:data` en `/scraper` — exactamente lo mismo que corres tú, con los mismos delays, el mismo User-Agent y la misma caché. |
+| **Qué commitea** | Solo `data/` y `scraper/cache/` (incluida la **caché de geocodificación**, que se versiona a propósito para que las corridas siguientes no vuelvan a preguntarle a Nominatim). Nunca toca `/web` ni el código. |
+| **Mensaje de commit** | `datos: actualización automática AAAA-MM-DD` (fecha de Bogotá), con el total de sitios, los `manual: true` intactos y el link a la corrida en el cuerpo. Autor: `github-actions[bot]`. |
+| **Días sin cambios** | No commitea nada y termina en verde. El pipeline es idempotente: si las fuentes no cambiaron, el archivo queda byte a byte igual y no hay commit ni redeploy. **Un día en verde sin commit significa "revisé todas las fuentes y no había nada nuevo"**, no que el workflow no corriera. |
+| **Permisos** | `contents: write` y nada más, con el `GITHUB_TOKEN` que GitHub inyecta solo. **Sin secretos adicionales.** |
+| **Volumen de red** | ~14 requests al día repartidos en tres dominios (≤ 8 a la hoja de Google, 6 al scrape — 2 `robots.txt` + 4 artículos —, y 0 a Nominatim salvo direcciones nuevas). El detalle está comentado dentro del YAML. |
+
+### Dispararlo a mano
+
+En GitHub: pestaña **Actions** → workflow **"Actualizar datos"** → botón **"Run workflow"** → rama `main` → **Run workflow**. Tarda ~1 minuto. Sirve cuando la hoja recibió una actualización grande, o para reintentar después de un fallo. (Desde tu computador, `cd scraper && npm run build:data` hace exactamente lo mismo; la diferencia es que el commit y el push los haces tú.)
+
+### Los dos gates antes de commitear
+
+1. **Invariante `manual: true`.** El workflow fotografía los registros manuales de `git show HEAD:data/sitios.json` antes de correr y los compara con los del resultado. Si alguno fue **cambiado, eliminado o agregado**, imprime el diff exacto y **muere en rojo sin commitear**. Es la misma garantía que `merge.ts` da por construcción y que `build-data.ts` verifica antes de escribir, comprobada una tercera vez donde nadie está mirando en vivo.
+2. **`npm run validate`** sobre el archivo final, el gate de siempre.
+
+Si cualquiera de los dos falla, no se commitea nada: no existe el estado "a medias". Lo mismo si falla el pipeline.
+
+### Cómo leer el historial de commits
+
+- **Un commit diario no significa que el mapa cambió.** Si lo único que cambió fue un CSV de `/data/import/` (la hoja se editó en una columna que no mapeamos, o se reordenó una fila), habrá commit y Vercel reconstruirá, pero el HTML publicado sale idéntico. El `git diff` del commit dice exactamente qué cambió; `data/sitios.json` es el único archivo que afecta lo que la gente ve.
+- **El campo `actualizado` del JSON es la fecha del último cambio real de los datos, no la de la última revisión.** En un día sin novedades el pipeline lo deja congelado a propósito (es lo que permite que el archivo quede byte a byte igual y no haya commits de ruido). Por eso la web puede decir con verdad "esta lista se actualiza sola una vez al día" y, si el dato es viejo, decir además hace cuánto fue la última actualización: son dos hechos distintos y los dos son ciertos.
+
+### Si falla: dónde mirar y qué hacer
+
+GitHub → **Actions** → la corrida en rojo → el paso en rojo tiene el log completo. Al final de cada corrida (verde o roja) hay además un **resumen** con la cola del reporte del pipeline.
+
+| Paso en rojo | Qué pasó | Qué hacer |
+|---|---|---|
+| `Instalar dependencias del scraper` | `package.json` y `package-lock.json` quedaron desincronizados | `cd scraper && npm install`, commitear el `package-lock.json` |
+| `Pipeline completo (npm run build:data)` | El mensaje dice en qué fase murió. Lo más probable: la hoja comunitaria no se pudo descargar **y** el snapshot local tampoco sirve, o `geocode` chocó con el límite de Nominatim | Nada urgente: `/data/sitios.json` quedó intacto en `main`. Reintentar a mano; si se repite, correr el pipeline localmente para ver el error de cerca |
+| `Verificar el invariante manual:true` | Algo modificó un registro manual — **bug serio**, no lo ignores | El diff está impreso en el log. Reproducir localmente con `npm run build:data` y `git diff` antes de tocar nada |
+| `Validar el schema` | El resultado no valida contra zod | Correr `npm run validate` localmente; el mensaje dice qué campo y qué sitio |
+| `Commit y push` | Casi siempre: alguien empujó a `main` mientras el pipeline corría (`non-fast-forward`) | Volver a dispararlo a mano; la corrida nueva parte del estado nuevo. Si dice `permission denied`, revisar los requisitos de abajo |
+
+**Corrida verde con aviso de `scrape`:** el reporte puede decir `⚠ scrape FALLÓ`. Es deliberado y no tumba la corrida — si un artículo oficial cambió de redacción, el pipeline sigue con el staging previo para que un artículo caído no borre puntos ya conocidos. Pero significa que **el parser quedó desactualizado**: hay que arreglar `src/sources.ts` / `src/scrape.ts` (ver la sección de scraping). Mientras tanto, los datos oficiales que ya estaban siguen publicados.
+
+### Desactivarlo
+
+- **Temporalmente:** Actions → workflow "Actualizar datos" → menú `···` → **Disable workflow**. Se reactiva desde el mismo menú.
+- **Solo el horario, dejando el botón manual:** comentar el bloque `schedule:` del YAML.
+- **Del todo:** borrar `.github/workflows/actualizar-datos.yml`. El pipeline manual sigue funcionando exactamente igual: este workflow no es una dependencia de nada.
+
+### Requisitos en GitHub (una sola vez)
+
+- El workflow **solo empieza a correr cuando el archivo está en `main`**: los workflows programados corren únicamente desde la rama por defecto. La primera corrida automática será el siguiente 10:20 UTC después de ese push.
+- **Settings → Actions → General → Workflow permissions:** el `permissions: contents: write` del YAML debe poder aplicarse. Si el push falla con `permission denied`, es aquí.
+- **Sin protección de rama en `main`** que exija pull request, o el push del bot será rechazado.
+- GitHub **desactiva los workflows programados tras 60 días sin actividad** en el repositorio. Si un día dejan de llegar los commits diarios, revisa eso primero (se reactivan con un clic).
+- **Verificación que cierra el círculo:** después del primer push automático, confirma en Vercel que hubo un deploy nuevo. Esa es la única parte de la cadena que este repositorio no puede probar por sí solo, y es justamente la que sostiene la frase "actualizado cada 24 horas" de la interfaz.
 
 ## Decisiones técnicas (F1)
 
