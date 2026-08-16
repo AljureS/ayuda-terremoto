@@ -42,10 +42,12 @@ import { ZodError } from 'zod';
 import { ArchivoSitiosSchema, CATEGORIAS } from './schema.js';
 import type { ArchivoSitios, Sitio } from './schema.js';
 import { ahoraBogota } from './lib/time.js';
-import { RAIZ_REPO, RUTA_SITIOS_JSON } from './lib/paths.js';
+import { RAIZ_REPO, RUTA_ESTADO_PIPELINE, RUTA_SITIOS_JSON } from './lib/paths.js';
 import { escribirSitios, ordenarArchivo } from './lib/sitios-file.js';
 import { RUTA_SCRAPED } from './scrape.js';
 import { fusionarConStaging, type ResultadoFusion } from './merge.js';
+import { FUENTES } from './sources.js';
+import { escribirEstadoPipeline, VERSION_LATIDO } from './estado-pipeline.js';
 
 const DIR_SCRAPER = path.join(RAIZ_REPO, 'scraper');
 const SEP = '─'.repeat(72);
@@ -129,6 +131,14 @@ async function main(): Promise<void> {
   const avisos: string[] = [];
 
   // ── Fase 0 · preflight: estado inicial ──
+  // Los BYTES exactos del archivo al arrancar: al cerrar la corrida se comparan
+  // con los de salida para saber si esta pasada modificó sitios.json (campo
+  // `huboCambios` del latido). Byte a byte y no "contenido equivalente" a
+  // propósito: es la misma verdad que verá `git diff` en el commit.
+  const bytesIniciales = fs.existsSync(RUTA_SITIOS_JSON)
+    ? fs.readFileSync(RUTA_SITIOS_JSON, 'utf8')
+    : null;
+
   let state0: ArchivoSitios;
   try {
     state0 = leerSitios(RUTA_SITIOS_JSON) ?? { actualizado: ahora, sitios: [] };
@@ -149,7 +159,8 @@ async function main(): Promise<void> {
 
   // ── Fase 2 · scrape ──
   banner('2/5 · scrape', 'fuentes oficiales → staging cache/scraped.json (all-or-nothing)');
-  if (correrComando('scrape') !== 0) {
+  const scrapeFallo = correrComando('scrape') !== 0;
+  if (scrapeFallo) {
     avisos.push(
       'scrape FALLÓ (patrón roto, robots.txt o red). El pipeline continúa con el staging previo: ' +
         'un artículo caído no borra puntos ya conocidos. Revisar el error de arriba y actualizar el parser.',
@@ -252,6 +263,34 @@ async function main(): Promise<void> {
   const final = leerSitios(RUTA_SITIOS_JSON);
   if (final === null) throw new ErrorDeFase('reporte', 'desapareció /data/sitios.json (no debería ser posible)');
 
+  // ── El LATIDO: se escribe SIEMPRE que la corrida llega hasta aquí ──
+  // Aquí = después de que validate pasó (no se afirma "revisado" sobre un
+  // archivo que no valida) y antes de imprimir el reporte (queda en disco
+  // aunque la impresión se interrumpa). Es lo que permite que la web diga
+  // "revisado esta mañana, sin novedades" en vez de "última actualización hace
+  // 3 días". Ver src/estado-pipeline.ts para el porqué de cada campo.
+  const bytesFinales = fs.readFileSync(RUTA_SITIOS_JSON, 'utf8');
+  const latido = escribirEstadoPipeline({
+    version: VERSION_LATIDO,
+    // Sellado AQUÍ, no con el `ahora` del arranque: geocode corre como
+    // subproceso con su propio reloj y puede haber estampado `actualizado`
+    // segundos después: un `ultimoCambio` posterior a `ultimaRevision` sería
+    // incoherente ("cambió después de que lo revisaran").
+    ultimaRevision: ahoraBogota(),
+    huboCambios: bytesFinales !== bytesIniciales,
+    ultimoCambio: final.actualizado,
+    totalSitios: final.sitios.length,
+    fuentes: ['hoja-comunitaria', ...FUENTES.map((f) => f.clave)],
+    fases: [
+      { nombre: 'import:sheet', ok: true }, // si hubiera fallado, el pipeline habría abortado
+      { nombre: 'scrape', ok: !scrapeFallo }, // única fase que puede fallar sin tumbar la corrida
+      { nombre: 'merge', ok: true }, // idem: un fallo aquí aborta antes de llegar
+      { nombre: 'geocode', ok: !geocodeFallo },
+      { nombre: 'validate', ok: true }, // llegar hasta aquí ES que pasó
+    ],
+    avisos,
+  });
+
   const porId0 = new Map(state0.sitios.map((s) => [s.id, s]));
   const porIdFinal = new Map(final.sitios.map((s) => [s.id, s]));
   const nuevos = final.sitios.filter((s) => !porId0.has(s.id));
@@ -273,6 +312,15 @@ async function main(): Promise<void> {
     `TOTAL: ${final.sitios.length} sitios (inicio: ${state0.sitios.length}) · ` +
       `verificados: ${final.sitios.filter((s) => s.verificado).length} · ` +
       `manuales: ${final.sitios.filter((s) => s.manual).length} · sin coordenadas: ${sinCoords.length}`,
+  );
+
+  console.log(
+    `LATIDO → ${RUTA_ESTADO_PIPELINE}\n` +
+      `  revisión de esta corrida: ${latido.ultimaRevision} · ¿cambió sitios.json?: ${latido.huboCambios ? 'SÍ' : 'no'} · ` +
+      `último cambio de datos: ${latido.ultimoCambio}\n` +
+      `  ${latido.huboCambios
+        ? 'Hay cambios que revisar en el diff.'
+        : 'Sin novedades: sitios.json quedó byte a byte igual y el latido lo deja por escrito (la web dirá "revisado hoy", no "hace N días").'}`,
   );
 
   console.log(`\nNUEVOS (${nuevos.length}):`);

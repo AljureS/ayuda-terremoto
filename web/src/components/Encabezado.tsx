@@ -1,53 +1,52 @@
+import { Fragment } from "react";
+
+import { construirAviso, type Frescura } from "@/lib/aviso";
+
 import { BorrarDatos } from "./BorrarDatos";
 
 /**
- * La promesa del ritmo: el pipeline corre UNA VEZ AL DÍA por GitHub Actions y
- * publica solo. Si el sello del dataset es más viejo que eso, la promesa no se
- * cumplió y el aviso lo dice — nunca al revés (W8).
- */
-const HORAS_DE_PROMESA = 24;
-
-/** Frescura del dataset, calculada EN BUILD (`prepararDatos()`). */
-export interface Frescura {
-  /** "hace 3 h" / "hace 2 días" — el mismo `haceTexto()` de las tarjetas. */
-  hace: string;
-  /** Horas crudas: eligen la frase, para que el texto no pueda desmentir al dato. */
-  horas: number;
-  /** Sello ISO del dataset (atributo `datetime`, no texto visible). */
-  iso: string;
-}
-
-/**
- * Aviso de actualización (W8) — el ritmo, el dato duro y el llamado a
- * verificar, en una sola línea de contexto.
+ * Aviso de actualización (W8, reescrito en W9) — el ritmo, los sellos reales y
+ * el llamado a verificar, en un bloque de contexto.
  *
- * DÓNDE Y POR QUÉ: en el encabezado, pegado al banner de privacidad. Los dos
- * son avisos permanentes que enmarcan la lista sin competir con ella
- * (DESIGN.md §0: "es contexto, no alarma"), y comparten forma —ⓘ + texto
- * secundario— para que se lean como lo que son. La otra sede candidata era
- * junto al conteo honesto, y se descartó por una razón medible: en móvil la
- * vista mapa esconde TODO ese bloque (`enMapaMovil ? "hidden lg:block"` en
- * ListaFiltrada), así que el aviso desaparecería justo cuando la persona está
- * eligiendo un punto en el mapa. Aquí se ve en las dos vistas, en móvil y en
- * escritorio, y no toca el `aria-live` del conteo.
+ * QUÉ CAMBIÓ EN W9. El aviso de W8 se derivaba de un solo sello, el
+ * `actualizado` de sitios.json. Pero el pipeline es IDEMPOTENTE: si las
+ * fuentes no traen novedades no reescribe el archivo, así que ese sello se
+ * congela, y tras tres días tranquilos la portada decía "pero la última fue
+ * hace 3 días" — que se lee como abandono cuando la verdad es que las fuentes
+ * se revisaron esta mañana y no había nada nuevo. Ahora el aviso separa las
+ * dos verdades (revisión ≠ cambio) leyendo el latido del pipeline. La lógica
+ * de qué frase decir vive en `lib/aviso.ts`, PURA y probable con fixtures; este
+ * componente solo la dibuja.
  *
- * QUÉ DICE Y POR QUÉ NO MIENTE: la frase se DERIVA de `horas`, nunca de una
- * constante. Con el dato al día recita el ritmo; con el archivo más viejo que
- * la promesa, el "pero" antepone la realidad al ritmo. No hay redacción
- * posible de este componente que diga "actualizado hoy" sobre un archivo de
- * hace tres días.
+ * DÓNDE Y POR QUÉ (decisión de W8, intacta): en el encabezado, pegado al
+ * banner de privacidad. Los dos son avisos permanentes que enmarcan la lista
+ * sin competir con ella (DESIGN.md §0: "es contexto, no alarma"), y comparten
+ * forma —ⓘ + texto secundario— para que se lean como lo que son. La otra sede
+ * candidata era junto al conteo honesto, y se descartó por una razón medible:
+ * en móvil la vista mapa esconde TODO ese bloque (`enMapaMovil ? "hidden
+ * lg:block"` en ListaFiltrada), así que el aviso desaparecería justo cuando la
+ * persona está eligiendo un punto en el mapa. Aquí se ve en las dos vistas, en
+ * móvil y en escritorio, y no toca el `aria-live` del conteo.
+ *
+ * COSTO: 0 B de JS. Es un server component puro; todo esto se resuelve en la
+ * build y viaja como texto en el HTML.
  *
  * SIN MONO, a propósito: DESIGN.md §2 reserva el mono para cifras operativas y
  * cierra con "si aparece en prosa, es un error de implementación". Esto es
- * prosa. El `<time>` no cambia un píxel: lleva el instante absoluto en el
+ * prosa. Los `<time>` no cambian un píxel: llevan el instante absoluto en el
  * atributo, que —a diferencia del texto relativo, congelado en la build— no
  * envejece.
  */
-export function AvisoActualizacion({ hace, horas, iso }: Frescura) {
-  const desfasado = horas > HORAS_DE_PROMESA;
+export function AvisoActualizacion(frescura: Frescura) {
+  const aviso = construirAviso(frescura);
   return (
     <p
       data-aviso="actualizacion"
+      // La rama elegida, legible desde fuera: las pruebas de las cuatro (seis)
+      // ramas y la auditoría afirman sobre este atributo y no sobre la prosa,
+      // así que reescribir el copy no rompe una prueba de lógica. Son 30 B de
+      // HTML estático, sin JS.
+      data-caso={aviso.caso}
       className="mt-2 flex items-start gap-1.5 text-sec text-secundario"
     >
       {/* El ícono es decoración: `aria-hidden` y jamás canal único — todo lo
@@ -55,22 +54,24 @@ export function AvisoActualizacion({ hace, horas, iso }: Frescura) {
           esto es contexto permanente, no una interrupción. */}
       <span aria-hidden="true">ⓘ</span>
       <span>
-        Esta lista se actualiza sola una vez al día
-        {desfasado ? ", pero la última fue " : "; la última fue "}
-        <time dateTime={iso}>{hace}</time>.{" "}
-        {/* DESVIACIÓN DECLARADA de DESIGN.md §6, para el director: la cadena
-            canónica es "Verifica el punto antes de desplazarte: los horarios y
-            las necesidades cambian rápido." Aquí va SIN la cola explicativa.
-            La razón es medida, no estética: con la cola, el aviso ocupa 5
-            líneas (110 px) a 320 px y 4 (88 px) a 390 px, y empuja la primera
-            tarjeta 22 px más abajo en las dos. La cola explica POR QUÉ hay que
-            verificar; la orden está entera en la mitad que se conserva, y la
-            frase completa sigue literal en /acerca, que es a quien §6 se la
-            asigna. Si el director prefiere la cadena entera, es un cambio de
-            una línea: cuesta esos 22 px. */}
-        <strong className="font-medium text-tinta">
-          Verifica el punto antes de desplazarte.
-        </strong>
+        {aviso.segmentos.map((s, i) =>
+          typeof s === "string" ? (
+            <Fragment key={i}>{s}</Fragment>
+          ) : (
+            <time key={i} dateTime={s.iso}>
+              {s.hace}
+            </time>
+          ),
+        )}{" "}
+        {/* DESVIACIÓN DECLARADA de DESIGN.md §6, para el director (heredada de
+            W8): la cadena canónica es "Verifica el punto antes de desplazarte:
+            los horarios y las necesidades cambian rápido." Aquí va SIN la cola
+            explicativa. La razón es medida, no estética: con la cola, el aviso
+            gana una línea a 320 px y empuja la primera tarjeta otros 22 px
+            hacia abajo. La cola explica POR QUÉ hay que verificar; la orden
+            está entera en la mitad que se conserva, y la frase completa sigue
+            literal en /acerca, que es a quien §6 se la asigna. */}
+        <strong className="font-medium text-tinta">{aviso.orden}</strong>
       </span>
     </p>
   );
@@ -86,6 +87,7 @@ export function AvisoActualizacion({ hace, horas, iso }: Frescura) {
  *
  * `frescura` (W8) lo pasa SOLO la portada: es la página donde se decide a
  * dónde ir. /campanas, /acerca y la 404 no lo pasan y el aviso no se dibuja.
+ * El tipo lo define `lib/aviso.ts`, no este archivo: aquí solo se dibuja.
  */
 export function Encabezado({
   h1,

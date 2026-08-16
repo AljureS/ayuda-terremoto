@@ -50,3 +50,5 @@ mañana:
 ## Nunca
 
 Documentar comandos no probados · párrafos largos donde iría una lista numerada · documentación en inglés · instrucciones que dependen de contexto que solo está en la cabeza de quien las escribió.
+
+**`git push` está prohibido, sin excepciones.** Publicar es decisión de la persona mantenedora, siempre — incluso al probar un flujo de CI que lo incluya (usa un repositorio desechable en el scratchpad).

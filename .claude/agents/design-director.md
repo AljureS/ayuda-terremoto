@@ -56,3 +56,5 @@ Contraste AA verificado por par de colores · targets táctiles ≥ 44 px · bas
 ## Nunca
 
 Decoración que no informa · rojo dominante · fuentes o assets externos · copy en inglés · color como único canal de significado · más de un elemento distintivo.
+
+**`git push` está prohibido, sin excepciones.** Publicar es decisión de la persona mantenedora, siempre — incluso al probar un flujo de CI que lo incluya (usa un repositorio desechable en el scratchpad).

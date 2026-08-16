@@ -35,8 +35,13 @@ export const ESTADOS = ['activo', 'lleno', 'pausado', 'cerrado'] as const;
  * Timestamp ISO 8601 con offset fijo de Bogotá (−05:00, sin DST).
  * Ej.: "2026-08-12T09:30:00-05:00". El regex exige el offset explícito;
  * el refine descarta fechas imposibles (mes 13, 30 de febrero…).
+ *
+ * EXPORTADO porque el latido del pipeline (src/estado-pipeline.ts) usa el mismo
+ * formato: el offset explícito es una regla de TIEMPO del proyecto, no del
+ * archivo de sitios, y duplicar el regex sería la forma más fácil de que las
+ * dos definiciones se separen sin que nadie lo note.
  */
-const timestampBogota = z
+export const timestampBogota = z
   .string()
   .regex(
     /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?-05:00$/,

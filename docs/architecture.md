@@ -22,9 +22,14 @@ Alimentos · IDPYBA · IDCBIS                          │
                            │  escritura atómica, orden determinista
                            ▼
               ╔═══════════════════════════╗
-              ║   /data/sitios.json       ║   ← ÚNICA FRONTERA entre
+              ║   /data/sitios.json       ║   ← ÚNICA FRONTERA DE DATOS entre
               ║   fuente única de verdad  ║     las dos mitades del repo.
               ║   (editable a mano)       ║     También la edita el humano.
+              ╠═══════════════════════════╣
+              ║ /data/estado-pipeline.json║   ← el LATIDO (#13): cuándo se
+              ║ estado del sistema, no    ║     revisaron las fuentes ≠ cuándo
+              ║ datos (lo escribe el      ║     cambiaron los datos. La web
+              ║ pipeline en cada corrida) ║     tolera que no exista.
               ╚═══════════╤═══════════════╝
                           │  import en build time (nunca en runtime)
                           ▼
@@ -67,6 +72,8 @@ Semántica de los campos de control (el corazón del modelo de datos):
 
 El schema canónico completo con ejemplo vive en `docs/MASTER_PROMPT.md` — única definición ejecutable: `/scraper/src/schema.ts` (zod).
 
+**Un segundo archivo cruza la frontera: `/data/estado-pipeline.json`** (el *latido*, decisión #13). `sitios.json` sigue siendo la única frontera **de datos** — lo que la gente ve en el mapa sale de ahí y de ningún otro lado. El latido no lleva datos: lleva **estado del sistema** (cuándo se revisaron las fuentes por última vez, haya habido novedades o no). Lo escribe solo `build:data`, con las mismas reglas que todo lo que escribimos (zod → orden determinista → atómico), y la web lo lee en build time **tolerando que no exista**.
+
 ## 3. Decisiones de arquitectura (y sus porqués)
 
 | # | Decisión | Por qué | Tradeoff aceptado |
@@ -83,6 +90,7 @@ El schema canónico completo con ejemplo vive en `docs/MASTER_PROMPT.md` — ún
 | 12 | `vercel.json` **duplicado** en la raíz y en `/web` (contenido idéntico) | Hallazgo alto de la auditoría W6: con *Root Directory* = `web`, Vercel lee el `vercel.json` de dentro de esa carpeta e **ignora el de la raíz** — los headers de seguridad no llegarían a producción. Con ambos, la CSP se aplica cualquiera sea la configuración del dashboard | Dos archivos que hay que mantener sincronizados: **si editas uno, edita el otro**. El `curl -I` del deploy es la verificación final |
 | 10 | Tipografía system stack (o una self-hosted subseteada) | Google Fonts violaría el invariante de privacidad y cuesta un request en 3G | Menos identidad tipográfica; el elemento distintivo del diseño la compensa |
 | 11 | Filtros sí pueden ir en la URL (`?cat=sangre`) | Compartir por WhatsApp una vista filtrada es distribución real de la ayuda | Ninguno — la ubicación del usuario queda explícitamente prohibida en la URL |
+| 13 | **El latido del pipeline va en `/data/estado-pipeline.json`, NO dentro de `sitios.json`** | Son dos hechos distintos: *cuándo se revisó* y *cuándo cambió*. Con la corrida diaria automática, guardar solo el segundo hace que tres días sin novedades se lean como "última actualización hace 3 días" — abandono— cuando la verdad es "revisadas esta mañana, sin novedades". Meter el timestamp de revisión en `sitios.json` lo cambiaría **todos los días** y costaría la idempotencia byte a byte (decisión #8) y un `git diff` diario legible. Frontera nueva, pequeña pero real, entre **los datos** y **el estado del sistema** | Un archivo más que versionar y un commit diario casi siempre (mitigado: el asunto del commit distingue "sin novedades" de "actualización de datos", y ese commit es justo lo que refresca el "revisado hace N h" de la portada) |
 
 ## 4. Arquitectura de privacidad (frontera de confianza)
 

@@ -564,6 +564,10 @@ marcadas para ratificación de `design-director`.
 
 ### 1. Aviso de actualización en la portada
 
+> **Reescrito en W9** (ver más abajo): el texto de esta sección solo sobrevive
+> como rama de respaldo, la que se usa cuando no hay archivo de latido. La
+> decisión de DÓNDE va el aviso y la desviación de §6 siguen vigentes.
+
 - **Dónde: en el encabezado, pegado al banner de privacidad.** Los dos son
   avisos permanentes con la misma forma (ⓘ + texto secundario) y enmarcan la
   lista sin competir con ella. La otra sede candidata —junto al conteo
@@ -737,6 +741,222 @@ conserva literal** — sigue siendo cierta (`/validate-data`).
   buscó cada nombre y cada número en `out/`: 0 apariciones); el chunk de
   Leaflet (`d0deef33.*.js`) **no** aparece en el HTML de ninguna ruta; 0
   violaciones de CSP con los headers reales.
+
+## Decisiones de W9 (el aviso dice las dos verdades: revisar ≠ cambiar)
+
+Corrección de raíz de un defecto que W8 dejó documentado y no pudo arreglar
+solo. Nada de `/data`, `/scraper`, `/docs`, `.github` ni los `vercel.json` se
+tocó. Las cadenas nuevas están marcadas para ratificación de `design-director`.
+
+### El defecto
+
+El aviso de W8 se derivaba del sello `actualizado` de `sitios.json`. Pero el
+pipeline es **idempotente**: si las fuentes no traen novedades no reescribe el
+archivo, y el sello **se congela**. Con la Action diaria, tras tres días
+tranquilos la portada decía *"pero la última fue hace 3 días"* — que se lee
+como abandono, cuando la verdad es que **se revisaron las fuentes esta mañana y
+no había nada nuevo**. Un solo sello no puede distinguir "nadie revisó" de "no
+había novedades", y esas son dos situaciones opuestas para quien va a salir con
+una caja.
+
+### Lo que se lee ahora (contrato con el pipeline)
+
+`/data/estado-pipeline.json`, escrito por el pipeline **cada vez que corre**:
+`ultimaRevision` (ISO con offset), `huboCambios` (bool), `ultimoCambio` (ISO o
+`null`). Se lee en build time con la misma disciplina que `sitios.json`: server
+component, tipo propio duplicado a mano en `src/lib/latido.ts`, **cero imports
+de `/scraper`**.
+
+- **Se lee con `fs`, no con `import`** (`src/lib/latido.ts`). Un `import`
+  estático de un archivo que todavía no existe es un error de resolución en
+  tiempo de compilación: rompería la build. `readFileSync` en try/catch degrada
+  a `null`. La ruta se resuelve contra `process.cwd()` con dos candidatas
+  (`../data/…` y `./data/…`), y el módulo está memoizado por proceso.
+- **Un sello sin zona horaria se trata como ausente.**
+  `new Date("2026-08-15T05:20:00")` se interpreta en la hora local de la
+  máquina que construye: en un portátil de Bogotá da una cosa y en el runner de
+  Vercel (UTC) otra, con **5 h de diferencia** en un número que la portada
+  imprime como verdad. Preferimos caer al comportamiento anterior antes que
+  publicar un "hace 2 h" que en realidad son 7.
+- **Ruido calibrado:** archivo ausente = silencio (es el estado normal hoy);
+  archivo presente pero inservible = **un** `console.warn` con la ruta y el
+  valor recibido. Un archivo que la persona mantenedora cree que funciona y una
+  portada que lo ignora en silencio es el peor de los dos mundos.
+- **`ultimoCambio` es opcional para nosotros.** Si falta, se usa el sello
+  `actualizado` de `sitios.json`, que significa exactamente lo mismo — el
+  pipeline solo lo mueve cuando hubo cambios (`scraper/src/import-sheet.ts`:
+  `actualizado: huboCambios ? ahora : existente.actualizado`). De hecho se toma
+  **el más reciente de los dos**, no "el del latido si existe": marcar un punto
+  como lleno a mano —la operación más frecuente de la emergencia, skill
+  `/estado`— mueve el sello del dataset sin pasar por el pipeline.
+
+### Las ramas del aviso
+
+La lógica vive en `src/lib/aviso.ts`, **módulo puro** (sin `fs`, sin JSX, sin
+reloj): por eso las ramas se prueban con fixtures sin construir el sitio. El
+componente solo dibuja, y expone la rama elegida en `data-caso` para que las
+pruebas afirmen sobre la lógica y no sobre la prosa.
+
+| Rama (`data-caso`) | Condición | Texto |
+|---|---|---|
+| `revisado-con-cambios` | revisión ≤ 30 h y la corrida trajo novedades | "Las fuentes se revisaron **hace 2 h** y trajeron novedades." |
+| `revisado-sin-novedades` | revisión ≤ 30 h, sin novedades en esa corrida | "Las fuentes se revisaron **hace 2 h**: sin novedades desde **hace 4 días**." |
+| `cambio-fuera-de-revision` | el dato cambió después de la última revisión (edición a mano) | "La lista cambió por última vez **hace 1 h**." |
+| `revision-vieja` | revisión > 30 h | "Las fuentes no se revisan desde **hace 3 días**: los datos pueden estar viejos." |
+| `sin-latido-al-dia` / `sin-latido-desfasado` | no hay archivo de latido | las dos cadenas de W8, **literales** |
+
+Todas cierran con la orden canónica **"Verifica el punto antes de
+desplazarte."** (sin la cola larga; desviación de §6 heredada de W8 y
+mantenida por la misma razón medida).
+
+- **EVIDENCIA EN VEZ DE PROMESA** — el cambio de voz de W9. Ninguna rama con
+  latido dice ya "esta lista se actualiza sola una vez al día". Esa frase era
+  una promesa que la persona no puede verificar y **la primera en volverse
+  mentira cuando la Action falla** (por eso la rama de revisión vieja ya la
+  había tenido que soltar). Un sello de hace 2 h prueba lo mismo y se prueba
+  solo. El ritmo, que es real, se explica entero en `/acerca`. Y no es solo
+  estética: la promesa cuesta ~30 caracteres = **una cuarta línea a 320 y
+  360 px**, medida en Chrome — ver la tabla de render.
+- **`revisado-sin-novedades` es la rama que motivó todo.** El orden de la
+  frase es la corrección: primero la vigilancia, después la frescura real, con
+  los dos puntos haciendo el trabajo causal (lo segundo es consecuencia de lo
+  primero, no un descuido). Cubre igual un cambio de hace 20 h que uno de hace
+  4 días.
+- **`revision-vieja` va DESPUÉS de `cambio-fuera-de-revision`** a propósito: si
+  alguien corrigió el dato hace una hora, decir "los datos pueden estar viejos"
+  porque la Action lleva tres días caída sería falso donde importa.
+- **Un latido incoherente no puede mentir:** si dice `huboCambios: true` pero
+  los sellos no coinciden (±1 h), cae a la rama de dos hechos, que solo afirma
+  sellos. Probado (caso 7 del banco).
+- **Umbral 30 h** = 24 h de ritmo + 6 h de holgura. El cron de Actions es
+  "mejor esfuerzo" y una build disparada por un cambio de **código** puede caer
+  24,x h después de la última corrida sin que nada esté roto.
+
+### `/acerca` — "Cada cuánto se actualiza"
+
+Ajustada con la distinción completa, que es lo que la portada solo puede
+insinuar en una línea: **"Revisar no es lo mismo que cambiar."** Dice que
+muchos días la revisión no encuentra nada y los datos quedan igual —*eso no es
+descuido*—, que por eso la portada da los dos hechos por separado, y que si la
+revisión se detiene la portada dice desde cuándo no se revisa y que los datos
+pueden estar viejos. La regla de las 72 h y el camino manual se conservan
+literales.
+
+**Cada frase de `/acerca` que describe lo que hace la portada se verificó
+contra las seis cadenas que `construirAviso()` puede emitir** — no contra lo
+que el aviso decía cuando se escribió el párrafo. Es un riesgo real de esta
+fase: el copy de la portada se acortó DESPUÉS de redactar `/acerca`, y quedaba
+una frase ("la portada deja de prometer el ritmo") que describía una promesa
+que ninguna rama con latido hace ya. Aquí `/acerca` es el único lugar que
+enuncia el ritmo diario, y lo enuncia de sí mismo, no de la portada.
+
+En "Los datos, en números", la línea única "Última actualización de los datos"
+—que colapsaba los dos hechos— se parte en **"Última revisión de las fuentes"**
+(solo si hay latido) y **"Último cambio en los datos"**.
+
+### Evidencia de W9
+
+- **Build limpia**, sin warnings de export (`web/`, `npm run build`).
+- **Peso ≈ 0, como se prometió:** JS de primera carga de `/` **+2 B en crudo**
+  (492 501 → 492 503 B); el ±0,4 KB de gzip es ruido de compresión entre builds
+  con distintos hashes de chunk, **no código**: `grep` sobre `_next/static`
+  encuentra **0** apariciones de `novedades`, `construirAviso`, `revision-vieja`,
+  `ultimaRevision`, `estado-pipeline`, `node:fs` y `readFileSync`. La lógica
+  entera vive en build time. HTML de `/` +310 B (+82 B gz); `/acerca` +2 188 B
+  (+440 B gz, los párrafos nuevos); `/campanas` y 404 sin cambio. First Load JS
+  de `/`: **112 kB**, igual que el baseline. Presupuesto ≤ 180 KB.
+- **Los cuatro casos, probados con builds reales** sobre un clon del repo en el
+  scratchpad (`/data` **intacto**; el clon lleva su propio `data/`), leyendo el
+  texto del `out/index.html` construido:
+
+  | # | Fixture | `data-caso` | Texto exacto en el HTML |
+  |---|---|---|---|
+  | 1 | revisión 2 h · `huboCambios: true` | `revisado-con-cambios` | "Las fuentes se revisaron **hace 2 h** y trajeron novedades. Verifica el punto antes de desplazarte." |
+  | 2 | revisión 2 h · cambio 96 h | `revisado-sin-novedades` | "Las fuentes se revisaron **hace 2 h**: sin novedades desde **hace 4 días**. Verifica el punto antes de desplazarte." |
+  | 3 | revisión 72 h (Action caída) | `revision-vieja` | "Las fuentes no se revisan desde **hace 3 días**: los datos pueden estar viejos. Verifica el punto antes de desplazarte." |
+  | 4 | **sin archivo de latido** | `sin-latido-desfasado` | "Esta lista se actualiza sola una vez al día, pero la última fue **hace 27 h**. Verifica el punto antes de desplazarte." |
+
+  Los casos 1–3 son fixtures; el 4 se midió con el repo **antes** de que
+  aterrizara el latido, y es el que se publicaría si el archivo desapareciera.
+  Probados además, en el banco puro (`construirAviso` con fixtures): la otra
+  rama sin latido (`sin-latido-al-dia`), la edición a mano
+  (`cambio-fuera-de-revision`), el cambio de hace 20 h y el latido incoherente.
+
+- **El latido aterrizó a mitad de esta fase, y el dato real cayó justo en el
+  caso que motivó todo.** `/data/estado-pipeline.json` trae los tres campos con
+  offset (`ultimaRevision`, `huboCambios: false`, `ultimoCambio`) más cinco
+  campos extra (`version`, `totalSitios`, `fuentes`, `fases`, `avisos`) que el
+  lector ignora sin quejarse. Lo que la build real publica ahora:
+
+  > ⓘ Las fuentes se revisaron **hace menos de 1 h**: sin novedades desde
+  > **hace 27 h**. **Verifica el punto antes de desplazarte.**
+
+  Con el aviso de W8, ese mismo dato decía *"se actualiza sola una vez al día,
+  **pero** la última fue hace 27 h"*. Es exactamente la frase que se leía como
+  abandono cuando el sistema acababa de revisar las fuentes.
+- **Un latido inservible no rompe la build** (caso 5 del banco de fixtures:
+  `ultimaRevision` sin offset): build en verde, **un** `[latido]` en consola y
+  el aviso cae exacto al texto del caso 4.
+- **Render real** (Chrome headless, CDP, con los 4 headers de `/vercel.json` y
+  gzip): la build real a **195 / 320 / 360 / 390 / 430 / 1280 px** y cada
+  fixture a **320 / 360 / 390 px** — **cero desborde horizontal** en las 15
+  combinaciones. Posición de la primera tarjeta (`top`, px):
+
+  | | 320×568 | 360×640 | 390×844 | 1280×800 |
+  |---|---|---|---|---|
+  | *baseline W8* (caso 4) | 629 (4 líneas) | 607 (3) | 583 (3) | 569 (1) |
+  | **build real de hoy** (`revisado-sin-novedades`, sellos largos) | 629 (4) | 607 (3) | 583 (3) | 569 (1) |
+  | caso 1 y caso 2 (fixtures, sellos cortos) | **607 (3)** | 607 (3) | 583 (3) | 569 (1) |
+  | caso 3 (Action caída) | 629 (4) | 607 (3) | 583 (3) | 569 (1) |
+
+  **Nada empeora en ningún ancho.** La build real empata con el baseline en los
+  cuatro, y con sellos cortos ("hace 2 h") el aviso **gana 22 px a 320 px** —
+  el de W9 es más corto que el de W8. El número de líneas a 320 px depende del
+  largo de los sellos, no de la rama: "hace menos de 1 h" es la cadena más
+  larga que produce `haceTexto()`, así que la fila de hoy es el peor caso.
+  Ese fue el criterio para soltar la promesa del ritmo: la primera versión de
+  este copy la conservaba y medía **4 líneas a 320 y 360 px** (tarjeta a 629 y
+  629), 22 px peor que hoy en la pantalla de gama media. **Límite honesto, sin
+  cambios desde W8:** a 320×568 la primera tarjeta sigue bajo el pliegue;
+  cualquier aviso permanente cuesta ese asomo. A 360 asoma 33 px y a 390, 261.
+- **Lighthouse móvil** (3 corridas sobre la build real **con** latido, `out/`
+  servido con gzip y los headers reales): **performance 99 · accesibilidad 100
+  · best-practices 100 · SEO 100**, FCP 906–908 ms, LCP 1 957–2 004 ms, TBT 0,
+  CLS 0,000 — las mismas cifras de W8. `/acerca`: **performance 100 ·
+  accesibilidad 100**.
+- **Sin regresiones:** el conjunto de hosts externos de `out/` es **idéntico**
+  al del baseline (48, `diff` vacío); **0** contactos personales en claro (los
+  7 blobs ofuscados se decodificaron → 9 personas; se buscó cada nombre, cada
+  número y cada secuencia de dígitos en todo `out/`: 0 apariciones); el chunk
+  de Leaflet (`d0deef33.*.js`) **no** aparece en el HTML de ninguna ruta; **0
+  violaciones de CSP** en las 15 combinaciones de rama × ancho medidas.
+- **Una repetición para el director, no tocada aquí:** en `/acerca` conviven
+  "Último cambio en los datos: … hace 27 h" (sección de números) y "Datos
+  actualizados hace 27 h" (pie). Es el mismo sello con dos vocabularios en la
+  misma página. Unificarlo es cambiar `PieDatos`, que comparten `/campanas` y
+  la 404, así que se deja señalado en vez de decidido.
+
+### Lo que este cambio NO puede resolver solo
+
+- **PRECONDICIÓN CRUZADA, verificada:** el latido tiene que commitearse **en
+  todas las corridas, también en las que no cambian nada**. Si solo se
+  commiteara cuando hay novedades, `ultimaRevision` se congelaría igual que el
+  sello y esto reconstruiría el mismo defecto un archivo más allá. El workflow
+  lo hace bien —"COMMIT DIARIO, INCLUSO SIN NOVEDADES", y el paso de commit
+  excluye `estado-pipeline.json` del diff que decide el asunto—, así que la
+  condición se cumple hoy. **Si alguien la cambia, este aviso vuelve a
+  congelarse**: es la dependencia que hay que proteger. Como efecto lateral,
+  ese commit diario arregla además el "hace N h congelado en la build" que W8
+  documentó: si el latido se publica cada día, el sitio se reconstruye cada día
+  y la edad en build vuelve a ser de minutos.
+- **El texto sigue siendo el de la build.** Quien abra la página 20 h después
+  lee un número de 20 h antes. El `<time datetime>` lleva el instante absoluto,
+  que no envejece; corregirlo del todo pediría un reloj en el cliente, que W2
+  descartó por decisión documentada.
+- **El schema del latido está duplicado a mano.** Si el pipeline le cambia los
+  nombres de campo, el aviso no rompe nada: cae al fallback en silencio. Es la
+  degradación correcta, pero significa que un cambio de schema hay que
+  reflejarlo en `src/lib/latido.ts`.
 
 ## Pendiente de fases siguientes
 

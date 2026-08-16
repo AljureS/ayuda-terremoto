@@ -23,7 +23,9 @@ import {
   sanearTextoLibre,
   telHref,
 } from "./contacto";
+import type { Frescura, Instante } from "./aviso";
 import { hrefDonar } from "./donar";
+import { leerLatido } from "./latido";
 import { fechaBogota, haceTexto, horasDesde, slugCiudad } from "./texto";
 import type {
   Categoria,
@@ -173,23 +175,69 @@ export interface DatosPreparados {
   totalConCoords: number;
   /** "hace X h" del campo `actualizado` del dataset, calculado en build. */
   actualizadoHace: string;
-  /** El mismo dato en horas crudas: el aviso de la portada elige con él si
-   * puede recitar el ritmo diario o si tiene que decir que no se cumplió
-   * (W8). El texto se DERIVA del dato real; nunca hay una constante que
-   * afirme una frescura que el archivo no tiene. */
-  actualizadoHoras: number;
-  /** Sello ISO del dataset, para el `datetime` del `<time>` del aviso: el
-   * texto visible es relativo ("hace 3 h") y el atributo lleva el instante
-   * absoluto, que no envejece. */
-  actualizadoIso: string;
-  /** Fecha exacta del dataset en hora de Bogotá (para "Acerca de"). */
+  /** Fecha exacta del último CAMBIO en hora de Bogotá (para "Acerca de"). */
   actualizadoFecha: string;
+  /**
+   * Las dos verdades de frescura, ya resueltas (W9): cuándo CAMBIARON los
+   * datos y —si el pipeline dejó su latido— cuándo se REVISARON las fuentes.
+   * El aviso de la portada se construye de aquí (`construirAviso`); nunca de
+   * una constante. Ver src/lib/aviso.ts y src/lib/latido.ts.
+   */
+  frescura: Frescura;
+  /** Fecha exacta de la última revisión en hora de Bogotá, si hay latido. */
+  revisionFecha?: string;
   /**
    * Cuántos sitios aporta cada host de `fuente`. Alimenta los créditos de
    * "Acerca de" con números REALES del dataset en vez de cifras escritas a
    * mano que envejecen mal (honestidad del dato, DESIGN.md §4 candidato C).
    */
   sitiosPorFuente: Record<string, number>;
+}
+
+/** Un sello ISO, resuelto a las tres formas que consume la UI. */
+function instante(iso: string): Instante {
+  return {
+    hace: haceTexto(iso, AHORA_BUILD),
+    horas: horasDesde(iso, AHORA_BUILD),
+    iso,
+  };
+}
+
+/**
+ * Las dos verdades de frescura (W9).
+ *
+ * REVISIÓN sale del latido y solo de ahí: es el dato que `sitios.json` no
+ * puede tener, porque el pipeline es idempotente y no reescribe el archivo
+ * cuando no hay novedades.
+ *
+ * CAMBIO es el MÁS RECIENTE entre el `ultimoCambio` del latido y el sello
+ * `actualizado` del dataset — no "el del latido si existe". Los dos significan
+ * lo mismo (el pipeline solo mueve `actualizado` cuando hubo cambios:
+ * scraper/src/import-sheet.ts, `actualizado: huboCambios ? ahora : existente.actualizado`),
+ * pero una edición a mano —marcar un punto como lleno, la operación más
+ * frecuente de la emergencia— mueve el sello del dataset sin pasar por el
+ * pipeline, así que el latido se quedaría corto. Tomar el máximo hace que
+ * ninguna de las dos vías se pierda.
+ */
+function calcularFrescura(): { frescura: Frescura; revisionFecha?: string } {
+  const latido = leerLatido();
+  const sello = datos.actualizado;
+  if (!latido) return { frescura: { cambio: instante(sello) } };
+
+  const t = (iso: string) => Date.parse(iso);
+  const cambioIso =
+    latido.ultimoCambio && t(latido.ultimoCambio) > t(sello)
+      ? latido.ultimoCambio
+      : sello;
+
+  return {
+    frescura: {
+      cambio: instante(cambioIso),
+      revision: instante(latido.ultimaRevision),
+      huboCambios: latido.huboCambios,
+    },
+    revisionFecha: fechaBogota(latido.ultimaRevision),
+  };
 }
 
 /** Host de una URL de `fuente`, sin "www." (para agrupar los créditos). */
@@ -283,6 +331,7 @@ function verificarSinDatosPersonales(
 }
 
 export function prepararDatos(): DatosPreparados {
+  const { frescura, revisionFecha } = calcularFrescura();
   const personas: PersonaContacto[] = [];
   const vistas = datos.sitios.map((s) => aVista(s, personas));
   verificarSinDatosPersonales(vistas, personas);
@@ -317,10 +366,10 @@ export function prepararDatos(): DatosPreparados {
     totalSitios: datos.sitios.length,
     totalConCoords: datos.sitios.filter((s) => s.lat != null && s.lng != null)
       .length,
-    actualizadoHace: haceTexto(datos.actualizado, AHORA_BUILD),
-    actualizadoHoras: horasDesde(datos.actualizado, AHORA_BUILD),
-    actualizadoIso: datos.actualizado,
-    actualizadoFecha: fechaBogota(datos.actualizado),
+    actualizadoHace: frescura.cambio.hace,
+    actualizadoFecha: fechaBogota(frescura.cambio.iso),
+    frescura,
+    revisionFecha,
     sitiosPorFuente,
   };
 }

@@ -76,3 +76,5 @@ Tabla corta con: total de sitios · nuevos · modificados (y qué cambió) · si
 ## Nunca
 
 Tocar `/web` · agregar dependencias sin justificarlas · scrapear sin delays ni User-Agent · inventar coordenadas o fuentes · regenerar ids existentes · escribir `sitios.json` sin pasar por zod.
+
+**`git push` está prohibido, sin excepciones.** Publicar es decisión de la persona mantenedora, siempre. Esto incluye el caso que ya ocurrió una vez: al **simular un workflow de CI**, no basta con interceptar `git commit` — el bloque puede traer un `push` más abajo y se ejecutará de verdad contra el remoto. Si necesitas probar un flujo que publica, hazlo en un repositorio desechable (`git init` en el scratchpad) o intercepta `git` entero, nunca comandos sueltos.

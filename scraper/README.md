@@ -10,7 +10,7 @@ Recolecta e importa puntos de ayuda (terremoto de Colombia, 10-ago-2026) y escri
 | `npm run import:sheet` | ✅ funcional (F2) | Importa el Google Sheet comunitario con el mapeo aprobado en 2b (merge, nunca reemplazo; jamás toca `manual: true`). |
 | `npm run geocode` | ✅ funcional (F3) | Geocodifica con Nominatim los sitios con dirección y sin coordenadas (≤1 req/s, caché versionada). Ver sección abajo. |
 | `npm run scrape` | ✅ funcional (F4) | Scrapea las fuentes oficiales de `src/sources.ts` (cheerio, robots.txt, ≥2 s entre requests) y escribe el **staging** `cache/scraped.json`. **No toca `/data/sitios.json`.** Ver sección abajo. |
-| `npm run build:data` | ✅ funcional (F5) | Pipeline completo: importar → scrapear → **merge con dedupe** → geocodificar → validar, con reporte consolidado. Ver sección abajo. |
+| `npm run build:data` | ✅ funcional (F5) | Pipeline completo: importar → scrapear → **merge con dedupe** → geocodificar → validar, con reporte consolidado. Escribe además el **latido** (`/data/estado-pipeline.json`). Ver secciones abajo. |
 
 Además de estos comandos, `build:data` corre **solo, una vez al día** (5:20 a. m. de Bogotá) desde `.github/workflows/actualizar-datos.yml`, y commitea los cambios a `main` — ver [Actualización automática diaria](#actualización-automática-diaria-github-actions). Correrlo a mano sigue siendo válido y necesario cuando hay prisa.
 
@@ -64,6 +64,10 @@ import:sheet → scrape → merge con dedupe (src/merge.ts) → geocode → vali
   `sitios.json` **byte-idéntico** (verificable con `shasum`) y hace 0 requests
   a Nominatim (todo cae en caché). El merge restaura los timestamps de todo
   registro cuyo contenido no cambió respecto al inicio de la corrida.
+- **Escribe el latido** (`/data/estado-pipeline.json`) al cerrar, después de que
+  `validate` pasó: ese archivo —y no `sitios.json`— es el que cambia todos los
+  días, y es lo que permite distinguir "no había novedades" de "nadie revisó".
+  Ver la sección siguiente.
 
 ### Reglas de dedupe (src/merge.ts)
 
@@ -130,9 +134,63 @@ propósito (geocode.ts no es importable: ejecuta main() al cargarse).
   sitio con palabras distintas; gana la oficial). El diff de git al final es
   la verdad.
 
+## El latido del pipeline (`/data/estado-pipeline.json`)
+
+**Qué es:** el registro de **cuándo se revisaron las fuentes**, que es un hecho
+distinto de **cuándo cambiaron los datos**. `build:data` lo escribe **siempre
+que corre con éxito**, haya novedades o no.
+
+**Qué problema resuelve.** `sitios.json` trae un solo sello (`actualizado`) y el
+pipeline es idempotente: si las fuentes no traen nada nuevo, el archivo no se
+reescribe y ese sello se congela. Con el pipeline corriendo solo todos los días,
+derivar de ese sello la frase de frescura de la portada haría que tres días
+tranquilos se leyeran como **"la última actualización fue hace 3 días"** — y
+alguien concluiría que el proyecto está abandonado, cuando la verdad es que **se
+revisaron las fuentes esta mañana y no había nada nuevo**. Las dos frases son
+ciertas; la segunda es la honesta y la que tranquiliza. Hasta que existió este
+archivo, el sistema no podía decirla porque no guardaba ese hecho en ningún lado.
+
+**Por qué es un archivo aparte y no un campo de `sitios.json`.** Un timestamp de
+revisión dentro de `sitios.json` cambiaría el archivo **todos los días** aunque
+no hubiera novedades, y costaría las dos propiedades que más trabajo costó
+ganar: la **idempotencia byte a byte** (`shasum` igual entre corridas sin
+novedades) y un **`git diff` diario que solo muestra cambios significativos**,
+que es la herramienta de revisión de la persona mantenedora. Separarlos cuesta
+un archivo corto (~37 líneas) y conserva las dos. Es la decisión **#13** de
+`docs/architecture.md`; el schema vive en `src/estado-pipeline.ts`.
+
+| Campo | Qué significa |
+|---|---|
+| `version` | Versión de la **forma** del archivo (hoy `1`). La web lo lee con un tipo duplicado a mano; si el schema cambiara de forma, este número sube y quien lee puede detectarlo sin adivinar. Agregar un campo nuevo no es cambio de forma. |
+| `ultimaRevision` | **Cuándo se revisaron las fuentes** en esta corrida (ISO con offset −05:00). Es el campo que da sentido al archivo y el único que la web exige. Se sella en el instante de **escribir**, al cerrar la corrida, para que nunca quede por detrás de `ultimoCambio`. |
+| `huboCambios` | ¿Esta corrida modificó `/data/sitios.json`? Se calcula comparando el archivo **byte a byte** antes y después — la misma verdad que verá `git diff` en el commit, así que el latido y el historial no pueden contradecirse. |
+| `ultimoCambio` | **Cuándo cambiaron los datos** por última vez = el sello `actualizado` del `sitios.json` ya validado. No se arrastra a mano del latido anterior: ese sello **ya es** el valor arrastrado (el pipeline solo lo mueve cuando hubo cambios). Derivarlo de una sola fuente hace que no pueda desincronizarse del dato publicado, que no retroceda, y que recoja también las **ediciones a mano** (`/estado`, `/nuevo-sitio`), que cambian los datos sin pasar por el pipeline. |
+| `totalSitios` | Sitios publicados al cerrar la corrida. Diagnóstico. |
+| `fuentes` | Las fuentes que la corrida **intenta consultar** en cada pasada (la hoja comunitaria + las claves de `src/sources.ts`). Deliberadamente **no** se llama "consultadas" ni lleva un `ok` por fuente: `import:sheet` puede caer al snapshot CSV versionado sin tocar la red, y `scrape` es all-or-nothing, así que un `ok` por fuente afirmaría algo que esta capa no sabe. El estado real vive en `fases`. |
+| `fases` | Cómo le fue a cada fase, en orden. La única que puede aparecer con `ok: false` en una corrida verde es `scrape` (un artículo que cambió de redacción no tumba el pipeline); si `geocode` falla, `build:data` termina en rojo y el workflow no commitea. |
+| `avisos` | Los avisos de la corrida, tal cual salen en el reporte (p. ej. "scrape FALLÓ: se siguió con el staging previo"). |
+
+Reglas de operación:
+
+- **Lo escribe solo `build:data`**, una vez, al final y **solo después de que
+  `validate` pasó**: el latido afirma "revisé las fuentes y el resultado es
+  válido", así que no se escribe sobre un archivo que no valida. Las fases
+  sueltas (`npm run geocode`, `npm run scrape`) no lo tocan.
+- **Se versiona en git**, igual que la caché de geocodificación: es el latido, y
+  tiene que viajar al repo para que la web lo lea en build time.
+- Escritura con el camino de siempre: **zod → orden determinista → atómica**.
+  En un día sin novedades su diff es de **una sola línea** (`ultimaRevision`).
+- **La web tolera que no exista**: si falta, cae al sello de `sitios.json` y la
+  portada vuelve exactamente a su comportamiento anterior. Por eso este archivo
+  pudo aterrizar sin coordinar despliegues.
+- Correr el pipeline **a mano** también mueve el latido: tu árbol de trabajo
+  queda con `data/estado-pipeline.json` modificado. Commitéalo con el resto o
+  descártalo con `git checkout -- data/estado-pipeline.json`; no afecta a nadie
+  hasta que llegue a `main`.
+
 ## Actualización automática diaria (GitHub Actions)
 
-`.github/workflows/actualizar-datos.yml` corre **este mismo pipeline** una vez al día en los servidores de GitHub y, si algo cambió, lo commitea a `main`. Como el push a `main` dispara el redeploy de Vercel, ese workflow es lo que hace **cierta** la promesa que la web le hace a la gente ("los datos se actualizan cada 24 horas"): antes de que existiera, los datos solo se actualizaban cuando alguien se acordaba de correr el comando.
+`.github/workflows/actualizar-datos.yml` corre **este mismo pipeline** una vez al día en los servidores de GitHub y commitea el resultado a `main`. Como el push a `main` dispara el redeploy de Vercel, ese workflow es lo que hace **cierta** la promesa que la web le hace a la gente ("los datos se actualizan cada 24 horas"): antes de que existiera, los datos solo se actualizaban cuando alguien se acordaba de correr el comando.
 
 > **La automatización no reemplaza el control humano: lo complementa.** Puedes seguir corriendo `npm run build:data` a mano cuando quieras, y esa sigue siendo la vía rápida cuando la hoja comunitaria recibe una tanda grande de puntos y no quieres esperar a mañana. Y si editas un sitio a mano (`/estado`, `/nuevo-sitio`, o el JSON directo) y haces push, **la corrida del día siguiente lo respeta**: el pipeline jamás toca un registro con `manual: true`, y el workflow lo vuelve a verificar antes de commitear.
 
@@ -140,9 +198,9 @@ propósito (geocode.ts no es importable: ejecuta main() al cargarse).
 |---|---|
 | **Cuándo corre** | Todos los días a las **5:20 a. m. de Bogotá** (`cron: '20 10 * * *'` = 10:20 UTC; el cron de GitHub siempre es UTC y Bogotá es UTC−5 todo el año). Temprano a propósito: el dato del día queda fresco antes de que la gente salga a donar. El planificador de GitHub es de "mejor esfuerzo": puede retrasarse algunos minutos, nunca se adelanta. |
 | **Qué corre** | `npm ci` + `npm run build:data` en `/scraper` — exactamente lo mismo que corres tú, con los mismos delays, el mismo User-Agent y la misma caché. |
-| **Qué commitea** | Solo `data/` y `scraper/cache/` (incluida la **caché de geocodificación**, que se versiona a propósito para que las corridas siguientes no vuelvan a preguntarle a Nominatim). Nunca toca `/web` ni el código. |
-| **Mensaje de commit** | `datos: actualización automática AAAA-MM-DD` (fecha de Bogotá), con el total de sitios, los `manual: true` intactos y el link a la corrida en el cuerpo. Autor: `github-actions[bot]`. |
-| **Días sin cambios** | No commitea nada y termina en verde. El pipeline es idempotente: si las fuentes no cambiaron, el archivo queda byte a byte igual y no hay commit ni redeploy. **Un día en verde sin commit significa "revisé todas las fuentes y no había nada nuevo"**, no que el workflow no corriera. |
+| **Qué commitea** | Solo `data/` y `scraper/cache/` (incluidos el **latido** y la **caché de geocodificación**, ambos versionados a propósito). Nunca toca `/web` ni el código. |
+| **Mensaje de commit** | El asunto dice la verdad del día, según qué archivos se movieron: `datos: actualización automática AAAA-MM-DD` si cambió `sitios.json` · `revisión diaria: sin novedades en las fuentes (AAAA-MM-DD)` si solo se movió el latido · `revisión diaria: sin cambios en los datos publicados (AAAA-MM-DD)` si además se movió material interno (caché, CSVs) pero nada publicable. El cuerpo trae siempre los totales, el latido, los archivos que cambiaron y el link a la corrida. Autor: `github-actions[bot]`. |
+| **Días sin cambios** | **Sí hay commit** (el del latido) y termina en verde. `sitios.json` queda byte a byte igual —el pipeline sigue siendo idempotente—, pero `data/estado-pipeline.json` deja por escrito que la revisión ocurrió. Ese commit diario es además lo que **refresca el "revisado hace N h" de la portada**, que la web calcula en build time: sin push no hay rebuild, y sin rebuild el número se congelaría igual que antes. |
 | **Permisos** | `contents: write` y nada más, con el `GITHUB_TOKEN` que GitHub inyecta solo. **Sin secretos adicionales.** |
 | **Volumen de red** | ~14 requests al día repartidos en tres dominios (≤ 8 a la hoja de Google, 6 al scrape — 2 `robots.txt` + 4 artículos —, y 0 a Nominatim salvo direcciones nuevas). El detalle está comentado dentro del YAML. |
 
@@ -159,8 +217,14 @@ Si cualquiera de los dos falla, no se commitea nada: no existe el estado "a medi
 
 ### Cómo leer el historial de commits
 
-- **Un commit diario no significa que el mapa cambió.** Si lo único que cambió fue un CSV de `/data/import/` (la hoja se editó en una columna que no mapeamos, o se reordenó una fila), habrá commit y Vercel reconstruirá, pero el HTML publicado sale idéntico. El `git diff` del commit dice exactamente qué cambió; `data/sitios.json` es el único archivo que afecta lo que la gente ve.
-- **El campo `actualizado` del JSON es la fecha del último cambio real de los datos, no la de la última revisión.** En un día sin novedades el pipeline lo deja congelado a propósito (es lo que permite que el archivo quede byte a byte igual y no haya commits de ruido). Por eso la web puede decir con verdad "esta lista se actualiza sola una vez al día" y, si el dato es viejo, decir además hace cuánto fue la última actualización: son dos hechos distintos y los dos son ciertos.
+- **El asunto del commit ya te dice si el mapa cambió**, sin abrir el diff: solo
+  `datos:` significa que `data/sitios.json` cambió. Los dos asuntos que empiezan
+  por `revisión diaria:` significan que el mapa quedó igual — el primero cuando
+  no se movió nada más que el latido, el segundo cuando además cambió material
+  interno (caché de geocodificación, CSVs de `/data/import/`) que no altera lo
+  que la gente ve. El cuerpo lista siempre los archivos exactos.
+- **El campo `actualizado` del JSON es la fecha del último cambio real de los datos, no la de la última revisión.** En un día sin novedades el pipeline lo deja congelado a propósito (es lo que permite que el archivo quede byte a byte igual). La fecha de la última **revisión** vive en el latido, `data/estado-pipeline.json`: son dos hechos distintos, los dos son ciertos, y por eso están en dos archivos.
+- **Un `git log` sano se ve así:** una fila `revisión diaria:` casi todos los días y una fila `datos:` cuando de verdad pasó algo. Si dejan de aparecer filas diarias, el workflow no está corriendo (ver "Requisitos en GitHub": Actions desactiva los cron tras 60 días sin actividad).
 
 ### Si falla: dónde mirar y qué hacer
 
@@ -209,6 +273,7 @@ GitHub → **Actions** → la corrida en rojo → el paso en rojo tiene el log c
 ```
 src/
   schema.ts        ← schema zod canónico (única definición) + tipos inferidos
+  estado-pipeline.ts ← schema + escritura del LATIDO (/data/estado-pipeline.json)
   validate.ts      ← npm run validate
   import-sheet.ts  ← npm run import:sheet (F2, mapeo aprobado en 2b)
   geocode.ts       ← npm run geocode (F3, Nominatim + caché + escalera)

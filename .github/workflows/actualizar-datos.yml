@@ -5,8 +5,17 @@ name: Actualizar datos
 #
 # Esto es lo que hace CIERTA la promesa de la web ("los datos se actualizan
 # cada 24 horas"): corre el mismo pipeline que la persona mantenedora corre a
-# mano (`cd scraper && npm run build:data`), y si algo cambió, lo commitea a
-# main. El push a main dispara el redeploy de Vercel — no hace falta nada más.
+# mano (`cd scraper && npm run build:data`) y commitea el resultado a main. El
+# push a main dispara el redeploy de Vercel — no hace falta nada más.
+#
+# COMMIT DIARIO, INCLUSO SIN NOVEDADES. El pipeline escribe el LATIDO
+# (data/estado-pipeline.json) cada vez que corre con éxito, así que casi todos
+# los días hay algo que commitear aunque los datos no cambien. Es deliberado:
+# ese archivo es la prueba de que las fuentes se revisaron hoy, y el rebuild
+# que dispara es lo que refresca el "revisado hace N h" de la portada. El
+# asunto del commit distingue los casos para que el `git log` no mienta —ver
+# el paso "¿Qué cambió?"—. sitios.json sigue siendo byte a byte idéntico en un
+# día sin novedades: el latido está aparte justamente para no romper eso.
 #
 # La automatización NO reemplaza el control humano: `npm run build:data` a mano
 # sigue funcionando igual, y todo registro con `manual: true` es intocable para
@@ -165,49 +174,120 @@ jobs:
         working-directory: scraper
         run: npm run validate
 
-      # ── 5 · ¿Hay algo que commitear? ──────────────────────────────────────
-      # El pipeline es idempotente: la mayoría de los días no cambia nada y el
-      # workflow termina en verde sin commit.
+      # ── 5 · ¿Qué cambió? ──────────────────────────────────────────────────
+      # Desde que existe el LATIDO (data/estado-pipeline.json, que el pipeline
+      # reescribe SIEMPRE que corre con éxito), el commit diario es la norma y
+      # no la excepción. Por eso ya no basta un sí/no: el asunto del commit es
+      # lo que la persona mantenedora lee en `git log --oneline`, y decir
+      # "actualización de datos" un día sin novedades sería mentira.
+      #
+      # Tres casos, y cada uno es verdad SOLO por los archivos que se movieron:
+      #   datos    → data/sitios.json cambió: hay novedades publicadas.
+      #   revision → solo se movió el latido: se revisaron las fuentes y no
+      #              traían nada nuevo (sitios.json quedó byte a byte igual).
+      #   insumos  → se movieron el latido y material interno (caché de
+      #              geocodificación, CSVs de la hoja) pero NO sitios.json:
+      #              hubo movimiento en las fuentes, pero nada que publicar.
+      #              Existe porque "sin novedades en las fuentes" sería falso.
+      #   nada     → ni el latido se movió (el pipeline no llegó a escribirlo):
+      #              no debería ocurrir en verde, pero no se commitea a ciegas.
       #
       # `git add -A` + `git diff --cached --quiet` en vez de `git diff --quiet`
       # a secas: son equivalentes para archivos ya versionados, pero además
-      # detecta archivos NUEVOS (p. ej. el CSV de una pestaña nueva de la hoja),
-      # que `git diff` no ve por ser untracked. Deja todo listo para el commit.
-      - name: ¿Cambió algo?
+      # detecta archivos NUEVOS (p. ej. el CSV de una pestaña nueva de la hoja,
+      # o el propio latido la primera vez), que `git diff` no ve por ser
+      # untracked. Deja todo listo para el commit.
+      - name: ¿Qué cambió?
         id: cambios
         run: |
           git add -A -- data scraper/cache
           if git diff --cached --quiet -- data scraper/cache; then
-            echo "hay_cambios=false" >> "$GITHUB_OUTPUT"
-            echo "Sin cambios en data/ ni scraper/cache/ — no hay nada que commitear (el pipeline es idempotente)."
+            TIPO=nada
+          elif ! git diff --cached --quiet -- data/sitios.json; then
+            TIPO=datos
+          elif git diff --cached --quiet -- data scraper/cache ':(exclude)data/estado-pipeline.json'; then
+            TIPO=revision
           else
-            echo "hay_cambios=true" >> "$GITHUB_OUTPUT"
-            git diff --cached --stat -- data scraper/cache
+            TIPO=insumos
           fi
+          echo "tipo=$TIPO" >> "$GITHUB_OUTPUT"
+          echo "Clasificación de la corrida: $TIPO"
+          git diff --cached --stat -- data scraper/cache
 
-      # ── 6 · Commit y push (solo si cambió algo) ───────────────────────────
+      # ── 6 · Commit y push ─────────────────────────────────────────────────
       # Este push a main es el que dispara el redeploy de Vercel: es el último
-      # eslabón de la promesa de 24 horas.
+      # eslabón de la promesa de 24 horas. Y desde el latido tiene un segundo
+      # trabajo: el rebuild diario es lo que refresca el "revisado hace N h" de
+      # la portada, que la web calcula en build time.
+      #
+      # El ASUNTO dice la verdad del día; el CUERPO trae siempre los mismos
+      # hechos (totales, latido, archivos que se movieron, link a la corrida)
+      # para que el historial se pueda leer sin abrir GitHub.
       - name: Commit y push
         id: commit
-        if: steps.cambios.outputs.hay_cambios == 'true'
+        # Lista blanca explícita, no `!= 'nada'`: si el paso anterior no dejara
+        # `tipo` por cualquier motivo, un `!=` commitearía con asunto vacío.
+        # Así, lo desconocido NO se commitea (misma disciplina fail-closed que
+        # el resto del pipeline).
+        if: contains(fromJSON('["datos","revision","insumos"]'), steps.cambios.outputs.tipo)
         env:
+          TIPO: ${{ steps.cambios.outputs.tipo }}
           URL_CORRIDA: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           FECHA="$(TZ=America/Bogota date +%F)"
           RESUMEN="$(node -e 'const d = JSON.parse(require("node:fs").readFileSync("data/sitios.json", "utf8")); console.log(d.sitios.length + " sitios · registros manual:true intactos: " + d.sitios.filter((s) => s.manual).length);')"
+          LATIDO="$(node -e 'try { const l = JSON.parse(require("node:fs").readFileSync("data/estado-pipeline.json", "utf8")); console.log("Latido: revisión " + l.ultimaRevision + " · ¿cambiaron los datos?: " + (l.huboCambios ? "sí" : "no") + " · último cambio: " + l.ultimoCambio); } catch (e) { console.log("Latido: no disponible (data/estado-pipeline.json ausente o ilegible)"); }')"
+
+          case "$TIPO" in
+            datos)
+              ASUNTO="datos: actualización automática $FECHA"
+              EXPLICACION="Esta corrida SÍ trajo novedades: data/sitios.json cambió. El diff de
+          este commit es exactamente lo que cambió en el mapa."
+              ;;
+            revision)
+              ASUNTO="revisión diaria: sin novedades en las fuentes ($FECHA)"
+              EXPLICACION="Se revisaron las fuentes y no traían nada nuevo: data/sitios.json quedó
+          BYTE A BYTE igual. Lo único que cambia en este commit es el latido del
+          pipeline (data/estado-pipeline.json), que deja por escrito que la
+          revisión ocurrió — para que la web pueda decir «revisado hoy, sin
+          novedades» en vez de «última actualización hace N días», que sería
+          cierto pero daría a entender que nadie está mirando."
+              ;;
+            insumos)
+              ASUNTO="revisión diaria: sin cambios en los datos publicados ($FECHA)"
+              EXPLICACION="Nada que publicar: data/sitios.json quedó BYTE A BYTE igual. Sí se
+          movió material interno (caché de geocodificación y/o CSVs de la hoja
+          comunitaria) además del latido; nada de eso altera lo que la gente ve
+          en el mapa. El diff de abajo dice exactamente qué se movió."
+              ;;
+            *)
+              echo "::error::tipo de corrida inesperado ('$TIPO'): no se commitea nada."
+              exit 1
+              ;;
+          esac
+
+          MENSAJE="$RUNNER_TEMP/mensaje-commit.txt"
+          {
+            echo "$ASUNTO"
+            echo
+            echo "Corrida diaria del pipeline completo (import:sheet → scrape → merge"
+            echo "con dedupe → geocode → validate) desde"
+            echo ".github/workflows/actualizar-datos.yml."
+            echo
+            echo "$EXPLICACION"
+            echo
+            echo "$RESUMEN"
+            echo "$LATIDO"
+            echo
+            echo "Archivos:"
+            git diff --cached --stat -- data scraper/cache | sed 's/^/  /'
+            echo
+            echo "Log de la corrida: $URL_CORRIDA"
+          } > "$MENSAJE"
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit --file - <<FIN_DEL_MENSAJE
-          datos: actualización automática $FECHA
-
-          Corrida diaria del pipeline completo (import:sheet → scrape → merge
-          con dedupe → geocode → validate) desde
-          .github/workflows/actualizar-datos.yml.
-
-          $RESUMEN
-          Log de la corrida: $URL_CORRIDA
-          FIN_DEL_MENSAJE
+          git commit --file "$MENSAJE"
           # Si alguien empujó a main mientras corría el pipeline, este push
           # falla (non-fast-forward) y el job queda en rojo SIN commitear nada
           # remoto — que es lo correcto: el merge se calculó sin conocer ese
@@ -220,17 +300,22 @@ jobs:
       - name: Resumen de la corrida
         if: always()
         env:
-          HAY_CAMBIOS: ${{ steps.cambios.outputs.hay_cambios }}
+          TIPO: ${{ steps.cambios.outputs.tipo }}
           RESULTADO_COMMIT: ${{ steps.commit.outcome }}
         run: |
           {
             echo "## Actualización de datos — $(TZ=America/Bogota date '+%Y-%m-%d %H:%M') (Bogotá)"
             if [ "${RESULTADO_COMMIT:-}" = 'success' ]; then
-              echo "Hubo cambios: se commitearon y se empujaron a main (Vercel redeploya solo)."
+              case "${TIPO:-}" in
+                datos)    echo "**Hubo novedades:** \`data/sitios.json\` cambió y ya está en main (Vercel redeploya solo)." ;;
+                revision) echo "**Sin novedades:** se revisaron las fuentes y no traían nada nuevo. \`sitios.json\` quedó byte a byte igual; se commiteó solo el latido, que es lo que le permite a la portada decir «revisado hoy» en vez de «hace N días»." ;;
+                insumos)  echo "**Sin cambios publicados:** \`sitios.json\` quedó byte a byte igual. Se movieron el latido y material interno (caché de geocodificación / CSVs de la hoja), que no altera lo que la gente ve." ;;
+                *)        echo "Se commiteó y se empujó a main (Vercel redeploya solo)." ;;
+              esac
             elif [ "${RESULTADO_COMMIT:-}" = 'failure' ]; then
-              echo "Hubo cambios pero **el commit o el push falló**: nada llegó a main. Lo más común es que alguien empujara a main durante la corrida — vuelve a dispararlo a mano."
-            elif [ "${HAY_CAMBIOS:-}" = 'false' ]; then
-              echo "Sin cambios: no se commiteó nada. Los datos de ayer siguen siendo los vigentes."
+              echo "Había algo que commitear pero **el commit o el push falló**: nada llegó a main. Lo más común es que alguien empujara a main durante la corrida — vuelve a dispararlo a mano."
+            elif [ "${TIPO:-}" = 'nada' ]; then
+              echo "No se movió ni el latido, así que no se commiteó nada. **Esto no debería pasar en verde** (el pipeline reescribe \`data/estado-pipeline.json\` en cada corrida con éxito): revisa que el latido no esté en .gitignore."
             else
               echo "La corrida no llegó al chequeo de cambios: **algo falló antes**. Nada se commiteó."
             fi

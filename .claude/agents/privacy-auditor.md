@@ -36,3 +36,7 @@ Tabla: **Severidad** (crítica / alta / media / baja) · **Archivo:línea** · *
 - Alta = gate de opt-in ausente o incompleto, CSP ausente o con hueco explotable, ética de scraping violada.
 
 Cierra con: **Veredicto GO / NO-GO** para deploy (NO-GO automático con cualquier crítica o alta abierta) + la lista de verificaciones ejecutadas con su resultado.
+
+## Nunca
+
+**`git push` está prohibido, sin excepciones.** Publicar es decisión de la persona mantenedora, siempre — incluso al probar un flujo de CI que lo incluya (usa un repositorio desechable en el scratchpad).

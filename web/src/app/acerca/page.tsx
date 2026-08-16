@@ -167,8 +167,21 @@ export default function Acerca() {
               dirección cierta a un pin inventado.
             </li>
           </ul>
+          {/* Los dos sellos, separados (W9). Antes había una sola línea
+              —"Última actualización"— que colapsaba dos hechos distintos y
+              hacía imposible distinguir "nadie revisó" de "no había novedades".
+              La segunda línea solo existe si el pipeline dejó su latido. */}
+          {datos.revisionFecha && (
+            <p className="text-sec text-secundario">
+              Última revisión de las fuentes:{" "}
+              <span className="font-mono tabular-nums">
+                {datos.revisionFecha}
+              </span>{" "}
+              (hora de Bogotá) — {datos.frescura.revision?.hace}.
+            </p>
+          )}
           <p className="text-sec text-secundario">
-            Última actualización de los datos:{" "}
+            Último cambio en los datos:{" "}
             <span className="font-mono tabular-nums">
               {datos.actualizadoFecha}
             </span>{" "}
@@ -176,17 +189,35 @@ export default function Acerca() {
           </p>
         </Seccion>
 
-        {/* Reescrita en W8: hasta ahora esta sección describía solo el camino
-            manual, porque era el único que existía. Con la actualización
-            automática diaria (GitHub Actions) el ritmo es real y se puede
-            prometer; el resto —correr a mano, el archivo, la recarga— sigue
-            siendo cierto y se conserva. El aviso de la portada dice lo mismo
-            en una línea; aquí está el mecanismo completo. */}
+        {/* Reescrita en W8 (el ritmo automático) y ajustada en W9 con la
+            distinción que la portada solo puede insinuar en una línea: revisar
+            no es cambiar. Este es el lugar donde cabe el párrafo completo —el
+            aviso de la portada tiene que caber sobre el pliegue de un celular
+            de 320 px—. El resto —correr a mano, el archivo, la recarga, las
+            72 h— sigue siendo cierto y se conserva. */}
         <Seccion id="frecuencia" titulo="Cada cuánto se actualiza">
           <p>
-            Una vez al día, un proceso automático revisa las fuentes, actualiza
-            el archivo de datos y vuelve a publicar el sitio. Corre solo, sin
-            que nadie tenga que acordarse.
+            Una vez al día, un proceso automático revisa las fuentes: vuelve a
+            leer los listados oficiales y la hoja comunitaria, compara lo que
+            dicen con lo que hay publicado aquí y, si algo cambió, actualiza el
+            archivo de datos y vuelve a publicar el sitio. Corre solo, sin que
+            nadie tenga que acordarse.
+          </p>
+          <p>
+            <b className="font-semibold">Revisar no es lo mismo que cambiar.</b>{" "}
+            Muchos días la revisión no encuentra nada nuevo y los datos quedan
+            igual: eso no es descuido, es que las fuentes no publicaron
+            novedades. Por eso la portada las dice por separado: cuándo se
+            revisaron las fuentes y, cuando llevan días sin traer nada, desde
+            cuándo no cambia nada. Un dato que lleva días quieto puede estar
+            perfectamente vigilado.
+          </p>
+          <p>
+            Y si la revisión se detiene —porque el proceso automático falla o
+            nadie lo corre—, la portada lo dice con todas las letras: desde
+            cuándo no se revisan las fuentes y que por eso los datos pueden
+            estar viejos. Es la señal de que algo se rompió, y preferimos darla
+            a que todo parezca normal.
           </p>
           <p>
             No hay servidor ni base de datos: los datos son un archivo que se

@@ -18,15 +18,11 @@ export default function Home() {
     <>
       {/* El aviso de actualización (W8) va aquí, junto al banner de privacidad
           y NO en el pie: es contexto para decidir a dónde ir. Por eso el pie
-          de ESTA página no repite el "hace N h" — ver PieDatos. */}
-      <Encabezado
-        h1="Mapa de Ayuda"
-        frescura={{
-          hace: datos.actualizadoHace,
-          horas: datos.actualizadoHoras,
-          iso: datos.actualizadoIso,
-        }}
-      />
+          de ESTA página no repite el "hace N h" — ver PieDatos.
+          `frescura` (W9) trae ya resueltas las dos verdades —cuándo se
+          revisaron las fuentes y cuándo cambiaron los datos—; qué frase sale
+          de ellas lo decide `construirAviso()`. */}
+      <Encabezado h1="Mapa de Ayuda" frescura={datos.frescura} />
       <main className="flex-1">
         <ListaFiltrada
           sitios={datos.geograficos}

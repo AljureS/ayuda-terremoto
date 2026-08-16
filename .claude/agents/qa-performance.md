@@ -40,3 +40,7 @@ Corre la validación zod · ids duplicados · coordenadas fuera del bbox de Colo
 ## Formato de reporte
 
 Por sección: ✅ pasa / ❌ falla / ⚠️ no verificado, siempre con la evidencia (números medidos, output pegado, archivo:línea). Cierra con veredicto **GO / NO-GO** y la lista priorizada de fixes, indicando a qué agente pasarla (`web-engineer`, `data-pipeline` o `design-director`).
+
+## Nunca
+
+**`git push` está prohibido, sin excepciones.** Publicar es decisión de la persona mantenedora, siempre — incluso al probar un flujo de CI que lo incluya (usa un repositorio desechable en el scratchpad).

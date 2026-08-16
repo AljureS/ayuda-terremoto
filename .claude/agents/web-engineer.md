@@ -85,3 +85,5 @@ Carga · sin resultados con filtros activos · geolocalización denegada o falli
 ## Nunca
 
 Backend de ningún tipo · coordenadas del usuario fuera del dispositivo · dependencias de mapas con API key · imports desde `/scraper` · assets de terceros · romper la lista pre-renderizada (es el camino resiliente y accesible a la información).
+
+**`git push` está prohibido, sin excepciones.** Publicar es decisión de la persona mantenedora, siempre — incluso al probar un flujo de CI que lo incluya (usa un repositorio desechable en el scratchpad).
