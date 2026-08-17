@@ -3,11 +3,13 @@
 > **APROBADO por el usuario (2026-08-14, gate W1 de `docs/PLAN_WEB.md`).**
 > Este documento es **ley para la UI**: toda pantalla, componente y cadena de texto de `/web` se revisa contra él. Los cambios al sistema se escriben aquí primero y luego se aplican, nunca al revés.
 >
-> Decisiones aprobadas: sistema general (paleta/tipografía/layout) ✅ · elemento distintivo = **A, «riel de rumbo»** (§4) ✅ · contactos con nombre de persona = **revelado al tocar** (§7) ✅.
+> Decisiones aprobadas: sistema general (paleta/tipografía/layout) ✅ · elemento distintivo = **A, «riel de rumbo»** (§4) ✅ · contactos con nombre de persona = **revelado al tocar** (§7) ✅ — las tres, en la aprobación original del 2026-08-14.
 >
 > **Revisión W6 (2026-08-14).** La doble auditoría devolvió tres preguntas medidas (P4 contraste del punto ●, P5 acción en `pausado`, P6 borde de controles) y un hueco de copy (P8, `/campanas` vacío). Las decisiones ya están aplicadas en §1, §3, §5, §6, §8 y §9; el antes→después y el porqué de cada una están en **§11**.
 >
-> ⚠️ **Pendiente de ratificación del usuario — un solo punto:** el punto ● del chip de estado deja de tener tinta propia y pasa a usar la del texto del chip (§1, P4). **No cambian** los 6 colores núcleo, ni los textos y tintes de los 4 estados, ni las 10 categorías, ni el elemento distintivo. El resto de la revisión es correctivo (medidas mal atribuidas) o aditivo (un token de borde, copy nuevo).
+> ✅ **P4 ratificado (2026-08-17, revisión de conformidad):** el punto ● del chip de estado no tiene tinta propia — usa la del texto del chip (§1). Quedaba como único punto pendiente de la revisión W6 y ya está confirmado; el histórico del cambio sigue en §11. **No cambiaron** los 6 colores núcleo, ni los textos y tintes de los 4 estados, ni las 10 categorías, ni el elemento distintivo. El resto de W6 fue correctivo (medidas mal atribuidas) o aditivo (un token de borde, copy nuevo).
+>
+> **Revisión de conformidad (2026-08-17).** Una auditoría doc↔código encontró nueve puntos donde el código se adelantó a este documento o donde el documento afirmaba algo que el código desmiente. Los nueve están resueltos en §0, §3, §4, §6, §7 y §8, con su antes→después en **§11**. Conformidad medida: 54/54 tokens de §9 idénticos a `globals.css`, 34/34 razones de contraste recalculadas al centésimo, 42/44 cadenas de microcopy literales.
 
 ---
 
@@ -19,11 +21,11 @@ Realidades del dato que moldean cada decisión (pipeline 2026-08-13):
 
 | Realidad | Consecuencia de diseño |
 |---|---|
-| 204 sitios en ~28 ciudades | Selector de ciudad visible desde el día 1 (default: Bogotá, 68 sitios) |
+| 155 de 204 sitios tienen ciudad, repartidos en 28 (Bogotá 68, Medellín 22, Cali 13, Cartagena 11; el resto, colas de 1–4) | Selector de ciudad visible desde el día 1 (default: Bogotá) **+ opción "Todas las ciudades (155)"** como salida (§3) |
 | Solo ~20 sitios con coordenadas | **La lista es el héroe**; el mapa es mejora progresiva con conteo honesto |
 | 49 sitios sin ciudad ni punto físico | Ruta propia "Campañas nacionales", jamás mezclados con "cerca de ti" |
 | Estados ya trabajando (1 `lleno` real) | Semántica de estados legible de un vistazo, siempre texto + color |
-| 5 contactos con nombre de persona + celular | Decisión explícita de render (§7) |
+| 10 personas con nombre + celular, en 10 sitios (14 entradas: tres coordinadoras aparecen en dos sedes o campañas) | Decisión explícita de render (§7) |
 
 ---
 
@@ -138,7 +140,7 @@ Lista por defecto, mapa bajo demanda. Justificación: solo 20/204 sitios tienen 
 │ [Bogotá ▾]  [🔍 Buscar…]  [Mapa] │  ← BARRA STICKY (56 px): ciudad,
 ├──────────────────────────────────┤    búsqueda, toggle mapa/lista
 │ (Alimentos)(Agua)(Sangre)(Ropa)→ │  chips scroll horizontal (no sticky)
-│ ☐ Incluir llenos y cerrados      │  filtro de estado (default: solo activo)
+│ ☐ Incluir 1 punto que no recibe  │  filtro de estado (default: solo activo)
 ├──────────────────────────────────┤
 │ ▸ Campañas y convocatorias       │  tarjeta de acceso fija: los 49 sin
 │   nacionales (49) — ayuda desde  │  punto físico viven en /campanas,
@@ -155,7 +157,12 @@ Lista por defecto, mapa bajo demanda. Justificación: solo 20/204 sitios tienen 
 ```
 
 - **Sticky solo la barra de 56 px** (ciudad + búsqueda + toggle): en un viewport de 568 px no se sacrifica más. Los chips se quedan arriba — se configuran una vez.
-- Selector de ciudad: `<select>` nativo (teclado del sistema, cero JS extra), ciudades ordenadas por número de sitios, con conteo: "Bogotá (68)". Sin opción "todas" en v1: la pregunta del producto es local.
+- Selector de ciudad: `<select>` nativo (teclado del sistema, cero JS extra), ciudades ordenadas por número de sitios —desempate alfabético en español—, con conteo: "Bogotá (68)". El conteo de cada ciudad es de **todos** sus sitios, no solo los activos: nombra el tamaño de la ciudad, no el resultado del filtro.
+- **Última opción: "Todas las ciudades (155)"** (ratificada en la revisión de conformidad del 2026-08-17, §11 — antes este documento decía "sin opción «todas» en v1: la pregunta del producto es local"). La pregunta sigue siendo local; lo que cambió es qué significa "local". Tres razones la sostienen:
+  1. **Lo cercano no respeta el límite municipal.** El riel de rumbo (§4) ordena por distancia real; el `<select>` fijado en una ciudad esconde lo que queda al otro lado del borde por lejos que esté el resto. **No es hipotético: ya pasa con los 20 sitios ubicados de hoy.** El punto de Medellín y el de Itagüí están a **4,7 km** — municipios distintos, `<select>` distinto—, mientras dos puntos dentro de la misma Bogotá (Javeriana y Tadeo Lozano) están a **11,0 km**. Chía, contigua al norte de Bogotá, tiene otros dos. La división administrativa y la distancia caminable no son la misma cosa, y el elemento distintivo del sitio mide la segunda.
+  2. **La búsqueda está dentro de la ciudad.** Quien recibió por WhatsApp "la Cruz Roja está recibiendo" y escribe ese nombre solo encuentra la sede de la ciudad seleccionada. Sin "todas" no hay ninguna forma de buscar en el país.
+  3. **La cola es larga.** Bogotá tiene 68 de 155; los otros 87 se reparten en 27 ciudades, la mayoría con 1–4 sitios. Quien está en un municipio pequeño no sabe si su ciudad está en la lista, y adivinar entre 28 opciones es peor que ver las 155.
+- **Condiciones de la opción "todas"** (las cinco son parte de la decisión; quitar cualquiera la deja mal): (a) **nunca es el default** —el default es Bogotá, o la primera ciudad por conteo si Bogotá no estuviera—; (b) va **al final** del `<select>`, después de las ciudades: la pregunta local se lee primero; (c) su conteo es **155, no 204** — las campañas nacionales siguen fuera de la lista local, siempre (§3, `/campanas`); (d) con "todas" activa, **cada tarjeta muestra su ciudad** — sin ella "Cra 4 #22-61" es ambiguo entre 28 municipios; (e) la línea de conteo nombra el alcance ("N puntos en 28 ciudades") y el estado vacío por ciudad ("Todavía no hay puntos de esta categoría en {ciudad}", §6) **no aplica**: no hay una ciudad que nombrar.
 - Toggle **[Mapa]** carga Leaflet recién al tocarlo (chunk separado). Al abrir, muestra el conteo honesto (§6).
 - `/campanas`: ruta estática propia con las 46 campañas de dinero + 3 convocatorias nacionales. Tarjeta sin dirección/distancia, con "Dona aquí" como acción única (sujeta a la regla de arriba: solo en `activo`). Compartible por WhatsApp — es exactamente el contenido que más se reenvía.
 - **Secciones que se vacían** (añadido en W6/P8, §11): cada sección de `/campanas` —"Dona desde cualquier lugar", "Voluntariado nacional"— se renderiza **solo si tiene al menos un elemento**. Nunca un encabezado con "(0)" seguido de una lista vacía: un conteo honesto que anuncia la nada es peor que no estar. Si ninguna sección tiene contenido, las dos se sustituyen por el estado vacío de la página (§6). Y la tarjeta de acceso de la portada no se muestra con 0 campañas: **el sitio nunca enlaza a una página vacía.**
@@ -183,7 +190,13 @@ Orden de lectura: **nombre → estado → distancia → categorías → qué rec
 - **La acción primaria existe solo en `estado: activo`.** Regla, no lista de estados (reescrita en W6/P5, §11 — la redacción anterior enumeraba `cerrado`/`lleno` y dejaba `pausado` invitando a viajar). Si el punto no recibe **ahora mismo**, la tarjeta no ofrece "Cómo llegar"; si la campaña no recibe ahora mismo, no ofrece "Dona aquí". Vale para los cuatro estados y para cualquiera que se agregue después: la pregunta que contesta el botón es "¿voy?", y solo `activo` la contesta que sí.
 - **Informar no es invitar.** En `lleno`, `pausado` y `cerrado` la tarjeta sigue completa —nombre, chip, categorías, qué reciben, dirección, horario, fuente, frescura—: quien busca ese punto merece saber que existe y por qué hoy no. Lo único que se retira es el botón que empuja a moverse.
 - El **riel de rumbo (§4) no desaparece** en esos estados: la distancia es dato, no invitación. Saber que el punto pausado queda a 400 m sirve para volver mañana; borrarlo sería esconder información por miedo a que se malinterprete.
-- Teléfono: si existe, segunda acción `tel:` "Llamar" (44 px). Contactos con nombre de persona: §7. **Cuando no hay acción primaria y sí hay teléfono, "Llamar" toma el estilo primario**: pasa a ser la única acción de la tarjeta y además la correcta para estos estados —confirmar antes de desplazarte, §6—. Ninguna tarjeta muestra su única acción en estilo secundario.
+- Teléfono: si existe, segunda acción `tel:` "Llamar" (44 px). Contactos con nombre de persona: §7. **Cuando no hay acción primaria y sí hay teléfono institucional, "Llamar" toma el estilo primario**: pasa a ser la única acción de la tarjeta y además la correcta para estos estados —confirmar antes de desplazarte, §6—. Ninguna tarjeta muestra su única **acción de destino** en estilo secundario.
+- **Los controles de revelado de §7 quedan fuera de esa regla** (aclarado en la revisión de conformidad del 2026-08-17, §11; el documento decía "su única acción" y el código nunca lo cumplió para "Ver contacto"). La regla gobierna las acciones que **comprometen** —"Cómo llegar" te mueve, "Dona aquí" te saca del sitio, "Llamar" abre el marcador—: su estilo dice cuál es LA acción. "Ver contacto" no lleva a ninguna parte, expande la tarjeta en su lugar; es un control de revelado, y se queda **siempre secundario** por tres razones:
+  - **Es reversible y bimodal.** El mismo botón dice "Ver contacto" y "Ocultar contacto" (§6). Un control que cambiara de peso al alternarse mentiría sobre su importancia en uno de los dos estados.
+  - **La acción real está detrás del tap.** Si "Ver contacto" fuera primario, al revelarse habría dos primarios apilados o el énfasis saltaría de un botón a otro dentro de la misma tarjeta. La única acción de destino de esa tarjeta es el "Llamar" que aparece revelado.
+  - **§7 decidió no anunciar el dato.** El revelado existe para que el nombre y el celular de una persona no estén en el HTML inicial. Un bloque azul sólido diciendo "Ver contacto" publicita justo lo que la decisión eligió mantener discreto. La proporción es la decisión.
+- **Dentro del bloque revelado, "Llamar" también es secundario y plano, uno por persona.** No es un descuido: son hasta tres coordinadores en la misma tarjeta (la campaña de Fundación Amigos por una Nueva Colombia tiene tres) y ascender uno a primario **jerarquizaría personas** —diría "llama a esta"— sin ningún dato que lo justifique. Tres opciones iguales se presentan iguales.
+- Caso de referencia, para que la regla se pueda verificar contra la UI real: **Fundación Amigos por una Nueva Colombia** en `/campanas` no tiene enlace de donación ni teléfono institucional; su contacto es personal, así que su único control es "Ver contacto", secundario. Es correcto por esta regla, no una excepción.
 
 ### Desktop (≥ 1024 px)
 
@@ -192,7 +205,7 @@ Lista y mapa lado a lado; los filtros **no** son sidebar (10 chips caben en una 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ Mapa de Ayuda · banner privacidad                            │
-│ [Bogotá ▾] [🔍 Buscar…] (Alimentos)(Agua)(Sangre)… ☐ llenos  │  filtros: 1 barra horizontal
+│ [Bogotá ▾] [🔍 Buscar…](Alimentos)(Agua)(Sangre) ☐ no reciben │  filtros: 1 barra horizontal
 ├──────────────────────┬───────────────────────────────────────┤
 │ 68 puntos · [📍]     │                                       │
 │ ┌──────────────────┐ │                                       │
@@ -234,7 +247,10 @@ El borde derecho de cada tarjeta es una columna fija en mono donde vive la dista
 
 - **Por qué es el distintivo correcto:** es información pura (qué tan lejos y hacia dónde), nace del corazón del producto ("el punto más cercano"), cuesta 0 KB (SVG inline de 1 flecha + mono del sistema), y **solo aparece cuando la persona ejerce la acción privada** — el elemento memorable del sitio es la recompensa visible de que la promesa de privacidad es real.
 - Absorbe la honestidad del dato: los sitios sin coordenadas no fingen — un único separador los agrupa al final ("sin ubicación exacta todavía"), en la misma voz mono del riel.
-- Riesgo asumido (el único del sistema): la flecha norte-arriba exige una pizca de lectura de mapa. Mitigación: `aria-label` y `title` "Dirección desde tu ubicación, norte arriba"; la cifra en km siempre manda y la flecha solo acompaña.
+- Riesgo asumido (el único del sistema): la flecha norte-arriba exige una pizca de lectura de mapa. Mitigación en dos canales distintos, **que no se pisan** (corregido en la revisión de conformidad del 2026-08-17, §11 — este documento pedía `aria-label`, y el `aria-label` habría sido el error):
+  - **Ratón / puntero:** `title="Dirección desde tu ubicación, norte arriba"` en la columna. Explica la convención a quien ve la flecha y no la entiende.
+  - **Lector de pantalla:** un `<span class="sr-only">` con la lectura completa —"a 1,2 kilómetros, dirección noreste" (§8)—, con la flecha y la cifra en `aria-hidden`. Un `aria-label` en el contenedor **habría reemplazado** ese texto por la explicación de la convención: quien no ve la flecha se habría quedado sin la distancia y sin el rumbo, que es toda la información. La convención norte-arriba no le sirve a quien no ve el dibujo; la cardinal hablada sí.
+  - La cifra en km siempre manda y la flecha solo acompaña.
 
 ### Candidato B — «El filo de estado»
 
@@ -255,7 +271,7 @@ El conteo como voz del sitio, en mono, en todas partes: "68 puntos en Bogotá", 
 - A favor: convierte la debilidad del dato (incompleto, cambiante) en credibilidad. En contra: es dirección de contenido más que forma visual — le falta cuerpo para ser EL distintivo.
 - **Se adopta como regla de copy (§6) subordinada al candidato A**, que ya habla en esa misma voz mono.
 
-**Recomendación: A**, con C absorbido como su regla de voz. B se descarta. → **Decisión pendiente del usuario.**
+**Recomendación: A**, con C absorbido como su regla de voz. B se descarta. → **Aprobado por el usuario el 2026-08-14** (gate W1, cabecera). El marcador "decisión pendiente" sobrevivió aquí hasta la revisión de conformidad del 2026-08-17 (§11): el riel llevaba desde W4 construido y en producción.
 
 ---
 
@@ -303,6 +319,7 @@ Reglas: español, voz activa, **imperativo neutro consistente** (la forma del co
 | **Permiso denegado** | "Sin el permiso, la lista no se puede ordenar por cercanía — pero sigue completa. Busca por dirección o localidad, o activa la ubicación para este sitio en la configuración del navegador." |
 | Ubicación no disponible / timeout | "No se pudo obtener tu ubicación. Intenta de nuevo donde haya mejor señal." |
 | Contexto inseguro / sin soporte | "Este navegador no permite usar la ubicación aquí. La lista completa sigue disponible." |
+| **Filtro de estado** (checkbox, default desmarcado = solo `activo`). Tres formas según el conteo | 0 → "Incluir los puntos que no reciben" · 1 → "Incluir 1 punto que no recibe" · N → "Incluir N puntos que no reciben" |
 | **Sin resultados** (filtros/búsqueda) | "Ningún punto coincide con esta búsqueda. Quita algún filtro o revisa otra categoría. Las campañas nacionales reciben ayuda desde cualquier lugar." — Acciones: **[Quitar filtros]** **[Ver campañas]** |
 | Ciudad sin sitios de la categoría | "Todavía no hay puntos de esta categoría en {ciudad}. Mira las campañas nacionales o revisa otra ciudad." |
 | **Campañas vacías** (`/campanas` sin ninguna campaña; añadido en W6/P8, §11) | "Todavía no hay campañas nacionales publicadas. Los puntos de ayuda con dirección siguen en la lista." — Acción: **[Ver puntos de ayuda]** |
@@ -312,16 +329,46 @@ Reglas: español, voz activa, **imperativo neutro consistente** (la forma del co
 | localStorage bloqueado | "El navegador no permite guardar preferencias en este dispositivo. Todo funciona igual; los filtros no se recordarán." |
 | **Botón borrar** (siempre visible en el pie) | "Borrar mis datos" |
 | Confirmación de borrar | "Se borrarán los filtros guardados y la ubicación recordada de este dispositivo. El sitio sigue funcionando normal." — **[Borrar]** **[Cancelar]** → al confirmar: "Datos borrados." |
-| **Disclaimer "Acerca de"** (contrato) | "Verifica el punto antes de desplazarte: los horarios y las necesidades cambian rápido." |
+| **Disclaimer "Acerca de"** (contrato) | "Verifica el punto antes de desplazarte: los horarios y las necesidades cambian rápido." — **literal en `/acerca`**, que es a quien el contrato se lo asigna. En el aviso de la portada va truncado a "Verifica el punto antes de desplazarte." (forma corta autorizada abajo) |
 | Frescura del dato (pie de tarjeta) | "hace 3 h" / "hace 2 días" (desde `ultimaActualizacion`) |
 | Dato comunitario sin confirmar (`verificado: false`) | "Reporte de la comunidad — sin confirmar" (texto 13 px junto a la fuente; nunca un color de alarma) |
-| Acciones canónicas | "Cómo llegar" · "Llamar" · "Dona aquí" · "Ver campañas" · **"Ver puntos de ayuda"** (W6) · "Usar mi ubicación" · "Quitar filtros" · "Reportar un cambio" |
+| Acciones canónicas — **destino** (llevan a otro lugar o comprometen) | "Cómo llegar" · "Llamar" · "Dona aquí" · "Ver campañas" · **"Ver puntos de ayuda"** (W6) · "Usar mi ubicación" · "Quitar filtros" · "Reportar un cambio" · **"Ver mapa"** · **"Acerca de este sitio"** |
+| Acciones canónicas — **revelado y vuelta** (abren o cierran algo en su lugar; nunca estilo primario, §3) | **"Ver contacto" / "Ocultar contacto"** (mismo botón, §7) · **"Volver a la lista"** (botón: vuelve de la vista mapa a la lista, misma página) · **"Volver a la lista de puntos"** (enlace de regreso desde `/campanas`, `/acerca` y la 404, con "←": nombra el destino porque cambia de ruta) |
 
 **Las campañas se mencionan solo si existen** (W6/P8, §11). Dos filas de arriba —"Sin resultados" y "Ciudad sin sitios de la categoría"— rematan mandando a las campañas nacionales. Con 0 campañas esa frase afirma algo falso y además enlaza a una página vacía, contra la regla de §10. Por eso **la frase de campañas y la acción [Ver campañas] se renderizan solo si hay al menos una campaña**; si no la hay, el estado vacío se queda con su acción restante ([Quitar filtros]) y la frase desaparece entera — no se reescribe en negativo, que sería explicarle a la persona un vacío que no le sirve de nada. Misma regla que la tarjeta de acceso de la portada (§3): el sitio no promete ayuda que hoy no tiene.
 
 **Gramática de los estados vacíos** (regla que gobierna las cuatro filas de arriba y cualquiera que se agregue): **hecho + salida**, en ese orden y en dos frases cortas. Primero qué pasa, sin rodeos ni disculpas; después a dónde ir, con una acción canónica. Nunca se culpa a la persona (en `/campanas` no filtró nada: no hay nada que "quitar") y nunca se dramatiza un vacío de datos con tono de error — un vacío es una foto del dato de hoy, no una falla. "Todavía" es la palabra del sistema para eso: dice que el dato falta **ahora**, y esta emergencia se mueve rápido. Mismo uso en "Todavía no hay puntos de esta categoría" y en "Sin ubicación exacta todavía".
 
-SEO / Open Graph (semilla para W5, verificada en caracteres):
+### Aviso de actualización de la portada — seis ramas
+
+Solo se dibuja en la portada (`/`), bajo el banner de privacidad. Se documenta aquí en la revisión de conformidad del 2026-08-17 (§11): se construyó en W8 y se partió en seis ramas en W9 sin pasar por este documento.
+
+**Qué distingue** (la razón de existir de las seis ramas): **revisar ≠ cambiar.** Una cosa es cuándo se miraron las fuentes —dice si el sistema está vivo— y otra cuándo cambiaron los datos —dice cuán fresco es lo que se lee—. Colapsadas en un solo número, tres días sin novedades se leían como abandono. Es la voz del "tablero honesto" (§4, candidato C): el sitio rinde cuentas de su propio dato en vez de prometer un ritmo que la persona no puede verificar.
+
+Cada rama es **contexto + orden**, en ese orden: primero el hecho con su sello, después siempre la misma orden. Los "hace X" van en `<time datetime>` (el texto relativo se congela en la build; el sello no envejece).
+
+| Rama | Cuándo | Texto exacto (contexto) |
+|---|---|---|
+| `revisado-con-cambios` | La última revisión fue reciente y trajo novedades (mismo instante) | "Las fuentes se revisaron {hace} y trajeron novedades." |
+| `revisado-sin-novedades` | Revisión reciente, sin novedades — **el caso que motivó W9** | "Las fuentes se revisaron {hace}: sin novedades desde {hace}." |
+| `cambio-fuera-de-revision` | Los datos cambiaron después de la última revisión (edición manual: marcar un punto como lleno) | "La lista cambió por última vez {hace}." |
+| `revision-vieja` | La revisión pasa de 30 h: la actualización automática se rompió | "Las fuentes no se revisan desde {hace}: los datos pueden estar viejos." |
+| `sin-latido-al-dia` | No hay archivo de latido y el dato tiene ≤ 24 h | "Esta lista se actualiza sola una vez al día; la última fue {hace}." |
+| `sin-latido-desfasado` | No hay archivo de latido y el dato pasa de 24 h | "Esta lista se actualiza sola una vez al día, pero la última fue {hace}." |
+| **Orden** (las seis, siempre, al final y en negrita) | — | "Verifica el punto antes de desplazarte." |
+
+Reglas de voz de este bloque:
+
+- **`revision-vieja` es la única rama que sube el tono, y lo sube con un hecho.** Nunca con un color de alarma ni un ícono de alerta (§0: códigos humanitarios, no de alarma). El ⓘ es decoración `aria-hidden` y el aviso no lleva `role="alert"`: es contexto permanente, no una interrupción.
+- **Ninguna rama con latido promete el ritmo.** "Se actualiza sola una vez al día" solo aparece cuando no hay latido, que es el único caso donde no se puede probar nada mejor. Un sello de hace 2 h prueba lo mismo y se verifica solo; una promesa es la primera frase que se vuelve mentira cuando la automatización falla. El ritmo —que existe— se explica en `/acerca`, donde cabe el párrafo.
+- **`cambio-fuera-de-revision` va antes que `revision-vieja` a propósito.** Si alguien corrigió el dato hace una hora, decir "los datos pueden estar viejos" porque la automatización lleva tres días caída sería falso donde importa: lo que la persona lee está fresco.
+
+**Desviación autorizada — la orden va truncada en la portada.** La cadena canónica del contrato es "Verifica el punto antes de desplazarte: los horarios y las necesidades cambian rápido." En el aviso se usa **solo la primera mitad**, hasta el punto. La razón es medida, no estética: con la cola, el aviso ocupa 5 líneas a 320 px y empuja la primera tarjeta 22 px más abajo, justo en las pantallas donde apenas asomaba. La lista es el héroe (§0): el contexto no le quita pantalla. Lo que se conserva es la **orden completa** —el imperativo entero, sin recortar—; lo que se va es la explicación de por qué, que no cambia lo que hay que hacer. **La frase completa sigue literal en `/acerca`**, que es a quien el contrato se la asigna, y allí con dos párrafos que la desarrollan. Es la única cadena del sistema con dos formas autorizadas, y las dos están escritas aquí: cualquier tercera es una desviación.
+
+### SEO / Open Graph
+
+(Semilla para W5, verificada en caracteres.)
+
 - `<title>`: **"Mapa de Ayuda — Terremoto en Colombia"** (37/60)
 - description: **"Encuentra el punto de ayuda más cercano: donaciones, sangre y voluntariado. Sin rastreo."** (88/90)
 - OG image 1200×630: `superficie` blanca, "Mapa de Ayuda" en sans 700 enorme + una línea de propósito, fila de 10 puntos de categoría como único adorno. Sin degradados. Legible en miniatura de WhatsApp.
@@ -329,9 +376,11 @@ SEO / Open Graph (semilla para W5, verificada en caracteres):
 
 ---
 
-## 7. Contactos con nombre de persona — decisión propuesta
+## 7. Contactos con nombre de persona — decisión aprobada
 
-Hecho (auditoría F6): 5 coordinadores de voluntariado publicados con nombre + celular personal por sus propias organizaciones (Sergio M., Ximena H., Natalia R., Carolina C. ×2 sedes, Hillary A.), y el mismo patrón en un par de campañas de dinero. Dato público y necesario — llamar al coordinador ES la acción de voluntariado — pero nuestro sitio estático lo amplificaría a otra escala de alcance y scrapeo.
+Hecho, **recontado sobre el dataset con el predicado del propio código** en la revisión de conformidad del 2026-08-17 (§11 — este documento decía 5 y la cifra nunca se actualizó): **10 personas con nombre + celular personal, en 10 sitios, 14 entradas.** Publicadas así por sus propias organizaciones. Ocho son coordinaciones de voluntariado (Sergio M., Ximena H., Natalia R., Carolina C. ×2 sedes, Hillary A., Marcelino G.) y el mismo patrón aparece en campañas de dinero (Gina R., Luisa C. y Gabriel L., los tres en dos registros de la misma fundación; Nicole G.). Dato público y necesario — llamar al coordinador ES la acción de voluntariado — pero nuestro sitio estático lo amplificaría a otra escala de alcance y scrapeo.
+
+La cifra es informativa, no operativa: **la regla nunca fue una lista de personas**, sino un predicado sobre el campo `contacto.telefono` (¿quedan palabras que no sean técnicas ni institucionales?). Por eso el error de conteo no produjo ningún dato expuesto — cubría a las 10 desde el primer día — y por eso esta cifra volverá a envejecer en cada corrida del pipeline sin que nada se rompa. **Si alguna vez hay que citarla, se recuenta; no se copia de aquí.**
 
 | Opción | Descripción | Contra |
 |---|---|---|
@@ -339,7 +388,9 @@ Hecho (auditoría F6): 5 coordinadores de voluntariado publicados con nombre + c
 | **(b) Revelado al tocar — recomendada** | La tarjeta muestra "Contacto de voluntariado disponible" + botón **[Ver contacto]** (44 px); al tocar se revela "Pregunta por {nombre}" + **[Llamar]** (`tel:`) | Un tap extra en emergencia |
 | (c) Solo organización, sin nombre | "Contacto: {organización}" + teléfono | Pierde información útil real ("pregunta por Carolina") que la propia organización quiso dar |
 
-**Recomendación: (b).** Conserva la fidelidad a la fuente pública y la utilidad humana del nombre, pero lo saca del HTML inicial (no queda indexado por buscadores ni cosechable con un `curl`; se renderiza solo en interacción). Costo: un tap. Proporcional: el dato sirve para llamar, no para listar. Aplica como regla general a todo `contacto.telefono` que contenga nombre de persona, no solo a los 5 actuales. → **Decisión pendiente del usuario.**
+**Recomendación: (b).** Conserva la fidelidad a la fuente pública y la utilidad humana del nombre, pero lo saca del HTML inicial (no queda indexado por buscadores ni cosechable con un `curl`; se renderiza solo en interacción). Costo: un tap. Proporcional: el dato sirve para llamar, no para listar. Aplica como regla general a todo `contacto.telefono` que contenga nombre de persona, no a una lista fija. → **Aprobado por el usuario el 2026-08-14** (gate W1, cabecera). El marcador "decisión pendiente" sobrevivió aquí hasta la revisión de conformidad del 2026-08-17 (§11): el revelado llevaba desde W2 construido y en producción.
+
+El botón del revelado es **siempre secundario**, en los dos sentidos del alternador ("Ver contacto" / "Ocultar contacto"), y las acciones "Llamar" que aparecen dentro del bloque revelado también: van una por persona y todas iguales. Las razones —y su interacción con la regla de acción única— están en §3.
 
 ---
 
@@ -349,7 +400,7 @@ Hecho (auditoría F6): 5 coordinadores de voluntariado publicados con nombre + c
 - **Targets táctiles ≥ 44 px:** botones, chips, toggle, select de ciudad, markers (padding invisible), "Ver contacto", links de acción del pie de tarjeta.
 - **Tipografía:** base 16 px; nada informativo por debajo de 13 px; interlínea ≥ 1.4 en prosa.
 - **Color nunca único canal:** estado = ● + palabra; categoría = color + etiqueta; marker = color + glifo + popup; "sin confirmar" = texto, no color.
-- **`prefers-reduced-motion`:** las transiciones son prescindibles por diseño. Solo existen dos micro-transiciones (chip activo 120 ms, aparición del panel de mapa 150 ms, ambas `opacity/transform`); bajo `reduce` se eliminan por completo. Nada anima solo, nada parpadea, cero spinners decorativos (los estados de carga son texto).
+- **`prefers-reduced-motion`:** las transiciones son prescindibles por diseño. El inventario completo son **cuatro micro-movimientos** (corregido en la revisión de conformidad del 2026-08-17, §11 — este documento decía "solo dos" y les atribuía una propiedad que no usan): tres `transition` de 120 ms —chip de categoría y toggle mapa/lista, ambos sobre `colors`; flecha del riel, sobre `transform`— y una `animation` de 150 ms sobre `opacity`, la aparición del panel de mapa. Bajo `reduce` se eliminan **las cuatro**: la regla global anula `transition` y `animation` con `!important` sobre `*`, así que el inventario no tiene que estar completo para que la garantía se cumpla — pero sí para que este documento no afirme algo falso. Ninguno de los cuatro es decorativo: dos acompañan un cambio de estado que ya ocurrió, la flecha gira a su ángulo nuevo en vez de saltar (bajo `reduce` aparece directamente en el ángulo final; nunca gira) y el panel entra sin parpadeo. Nada anima solo, nada parpadea, cero spinners decorativos (los estados de carga son texto).
 - **Foco visible:** anillo de 2 px `accion` + offset 2 px sobre cualquier fondo del sistema (razón 6.01–6.75, calculada). Orden de tabulación = orden de lectura; la lista es navegable por teclado completa.
 - **Semántica:** la lista es `<ul>` de `<article>`; estado y distancia con `aria-label` explícitos ("Estado: activo", "a 1,2 kilómetros, dirección noreste"); el toggle mapa/lista es `button` con `aria-pressed`.
 
@@ -430,6 +481,9 @@ Reglas de uso: las tarjetas se definen por `superficie` + `borde` 1 px + sombra 
 - **La revisión también va al revés** (aprendido en W6): si el código sigue este documento al pie de la letra y aun así el resultado está mal, el defecto es del documento. P4, P5 y P6 fueron los tres casos —una medida contra el fondo equivocado, una regla escrita como lista de estados, un piso de contraste prometido de más—, y en los tres el código era fiel. Un hallazgo de auditoría contra la UI se lee primero como sospecha contra estas páginas.
 - **Toda razón de contraste se declara con su fondo.** Un número solo es verificable si dice contra qué se midió; si el elemento se mueve de fondo, la fila se recalcula antes del cambio, no después.
 - **Preferir la regla al enumerado.** "Solo en `activo`" sobrevive a un estado nuevo; "en `cerrado`/`lleno`" no. Cuando una regla se pueda escribir como invariante positivo, se escribe así.
+- **Una cadena que se muestra a una persona es diseño, aunque nazca de una condición** (aprendido en la revisión de conformidad del 2026-08-17). Seis ramas de copy shipearon sin pasar por §6 porque parecían lógica. Regla: **si tiene texto visible, tiene fila en §6** — el conteo de una etiqueta, la rama de un `if`, el estado de un alternador. La prueba es "¿alguien la lee?", no "¿quién la escribió?".
+- **Una desviación declarada en un comentario de código no está declarada.** Un `// DESVIACIÓN de DESIGN.md` es honesto y no basta: nadie audita comentarios. Va a §6/§11 con su medida, o se revierte. Dos formas de la misma cadena solo existen si las dos están escritas aquí.
+- **Las cifras del dataset envejecen; los predicados no.** Ningún número de este documento (conteos de sitios, ciudades, personas) es operativo: se recuenta contra los datos, nunca se copia de aquí. Donde el número sostiene una decisión, se dice contra qué se midió y cuándo.
 - **Nunca:** decoración que no informa · rojo dominante · fuentes o assets externos · copy en inglés · color como único canal · más de un elemento distintivo · hex fuera de tokens · texto crítico bajo 4.5:1 · targets bajo 44 px · una razón de contraste declarada contra un fondo que no es el que se pinta · un enlace hacia una página vacía.
 
 ---
@@ -437,6 +491,98 @@ Reglas de uso: las tarjetas se definen por `superficie` + `borde` 1 px + sombra 
 ## 11. Revisiones del sistema
 
 El histórico no se borra: cada revisión deja aquí el antes→después y el porqué. La aprobación original del usuario (cabecera, 2026-08-14) se mantiene intacta.
+
+### Revisión de conformidad — 2026-08-17 (auditoría doc↔código, posterior a W9)
+
+Una auditoría contrastó este documento contra la UI construida. **La conformidad medida es alta**: los 54 tokens de §9 son idénticos a `globals.css`, las 34 razones de contraste de §1 y §5 recalculadas desde los hex del código coinciden al centésimo, y 42 de 44 cadenas de microcopy son literales. Lo que sigue no es deuda de calidad: es deuda de **gobernanza**. En nueve puntos el código se adelantó al documento, que es exactamente lo que §10 prohíbe.
+
+**Cómo se resolvió cada uno.** En dos casos había que elegir entre pedir un cambio de código o admitir que el documento estaba incompleto. **Los dos se resolvieron hacia el documento, y por eso esta revisión no pide ni una línea de código.** Eso no es indulgencia con el código: en los dos casos el código tenía una razón que el documento no había considerado, y la prueba es que escribirla obligó a **fortalecer la regla**, no a debilitarla — la regla de acción única salió de aquí distinguiendo destino de revelado, que es lo que siempre quiso decir.
+
+**C1 — La opción "Todas las ciudades". → Ratificada, con cinco condiciones escritas.**
+
+| | Antes (§3) | Ahora |
+|---|---|---|
+| Texto | *«Sin opción "todas" en v1: la pregunta del producto es local.»* | Última opción del `<select>`: **"Todas las ciudades (155)"**, con sus cinco condiciones |
+
+Es el hallazgo más viejo: se añadió en W2 porque la tarea lo pidió, quedó señalado como desviación consciente y nunca se resolvió — ningún documento del proyecto lo autorizaba. La frase de v1 no era un capricho: quería impedir que la lista se convirtiera en un directorio nacional y perdiera la pregunta "¿cuál me queda cerca?". Esa intención se conserva entera; lo que se corrigió es la creencia de que "local" y "municipio" son la misma cosa. **No lo son, y se puede medir con el dato de hoy:** el punto ubicado de Medellín y el de Itagüí están a **4,7 km** en municipios distintos, mientras dos puntos de la misma Bogotá (Javeriana y Tadeo Lozano) están a **11,0 km**. El `<select>` esconde el primero y muestra el segundo. Se suman dos huecos más: la búsqueda vive dentro de la ciudad —quien busca "Cruz Roja" sin "todas" no puede buscar en el país— y la cola es larga (68 de 155 en Bogotá; los otros 87 repartidos en 27 ciudades de 1 a 4 sitios), así que quien está en un municipio pequeño no sabe si aparece.
+
+Se ratifica **con las cinco condiciones que la vuelven disciplinada** (§3): nunca es el default · va al final · cuenta 155 y no 204 · cada tarjeta muestra su ciudad · la línea de conteo nombra el alcance y el estado vacío por ciudad no aplica. Las cinco ya se cumplen en la UI, y por eso ratificar no cuesta código: el ingeniero había implementado la opción **con** sus consecuencias, no suelta. Escribirlas aquí es lo que impide que la próxima edición se lleve una por delante.
+
+**C2 — El rótulo del filtro de estado. → El nuevo texto es el canónico, y entra a §6 con sus tres formas.**
+
+| | Antes (§3) | Ahora (§6, cadena canónica) |
+|---|---|---|
+| Rótulo | "☐ Incluir llenos y cerrados" | 0 → "Incluir los puntos que no reciben" · 1 → "Incluir 1 punto que no recibe" · N → "Incluir N puntos que no reciben" |
+
+El cambio salió de una revisión del usuario sobre la UI corriendo: *«¿qué significa ese input? ¿que está abierto y funcionando el lugar?»*. El rótulo viejo fallaba en tres cosas y el nuevo las arregla las tres. **(1) No decía qué escondía**: ahora el número lo dice, y de paso revela que la lista de arriba es la de los que **sí** reciben. **(2) Nombraba dos de los tres estados que oculta** —`pausado` quedaba fuera del texto—; "que no recibe" es una **regla, no un enumerado**, que cubre `lleno`, `pausado`, `cerrado` y cualquier estado futuro: es §10 aplicada al copy. **(3) Competía con "abierto/cerrado"**: el `estado` contesta "¿sigue recibiendo?", no "¿está abierto ahora?" —eso es el `horario`, y solo 17 de 204 sitios lo tienen—. "Recibir" es además el verbo que ya usan los chips ("Lleno — ya no recibe", "Pausado — no recibe por ahora"): el rótulo es su generalización exacta, no vocabulario nuevo.
+
+Detalle que va al documento porque sostiene la honestidad del número: **el conteo sale del conjunto filtrado vigente** (ciudad + chips + búsqueda), así que nunca promete puntos que al marcar la casilla no aparecen. Un conteo global habría dicho "Incluir 1 punto" en una ciudad donde no hay ninguno.
+
+**C3 — Seis ramas del aviso de frescura, sin documentar. → §6 gana el bloque completo, con la desviación del disclaimer autorizada.**
+
+Se construyeron en W8 y se partieron en seis en W9 sin pasar por §6: `revisado-con-cambios`, `revisado-sin-novedades`, `cambio-fuera-de-revision`, `revision-vieja`, `sin-latido-al-dia`, `sin-latido-desfasado`. Ahora están en §6 con su cadena exacta, su condición y sus reglas de voz. Distinguen **revisar de cambiar**: colapsadas en un solo número, tres días sin novedades se leían como abandono. Es el "tablero honesto" (§4/C) hecho encabezado.
+
+**Y la desviación que faltaba traer.** El ingeniero la declaró en un comentario de código y ahí se quedó; un comentario no es una declaración auditable (§10, regla nueva). Queda **autorizada** aquí:
+
+| | Cadena del contrato (§6) | En el aviso de la portada |
+|---|---|---|
+| Disclaimer | "Verifica el punto antes de desplazarte: los horarios y las necesidades cambian rápido." | **"Verifica el punto antes de desplazarte."** |
+
+La razón está medida: con la cola, el aviso ocupa **5 líneas a 320 px** y empuja la primera tarjeta **22 px** más abajo, en las pantallas donde apenas asomaba. §0 dice que la lista es el héroe; el contexto no le quita pantalla. Se conserva **la orden entera** —el imperativo completo, sin recortar— y se va la explicación de por qué, que no cambia lo que hay que hacer. La frase completa sigue **literal en `/acerca`**, que es a quien el contrato se la asigna. Es la única cadena del sistema con dos formas, y las dos quedan escritas: cualquier tercera es una desviación.
+
+**C4 — "Ver contacto" siempre secundario. → §3 excluye los controles de revelado, y la regla queda mejor dicha.**
+
+| | Antes (§3) | Ahora |
+|---|---|---|
+| Regla | "Ninguna tarjeta muestra su única **acción** en estilo secundario." | "Ninguna tarjeta muestra su única **acción de destino** en estilo secundario." + los controles de revelado de §7 quedan fuera, con su porqué |
+
+Hay una tarjeta real así hoy: **Fundación Amigos por una Nueva Colombia** en `/campanas`, sin enlace de donación y sin teléfono institucional —su contacto es personal—, de modo que su único control es "Ver contacto", secundario. La alternativa era ascenderlo a primario. Se descarta por tres razones: es un control **reversible y bimodal** (el mismo botón dice "Ocultar contacto", y cambiar de peso al alternarse mentiría en uno de los dos estados); **la acción real está detrás del tap**, así que un "Ver contacto" primario apilaría dos primarios o movería el énfasis dentro de la misma tarjeta; y **§7 decidió no anunciar el dato** — un bloque azul sólido publicita justo lo que el revelado eligió mantener discreto. La proporción es la decisión, no un efecto secundario de ella.
+
+Se documenta además lo que el hallazgo no preguntaba pero habría vuelto como el hallazgo de mañana: **dentro del bloque revelado, "Llamar" también es secundario y plano, uno por persona.** Esa misma campaña lista tres coordinadores; ascender uno **jerarquizaría personas** sin ningún dato que lo justifique. Tres opciones iguales se presentan iguales.
+
+Precisión que la regla vieja se comía: §3 dice que "Llamar" toma el estilo primario cuando queda solo. Eso habla del **teléfono institucional** de la tarjeta. En esta campaña ese teléfono no existe —el número es personal y vive detrás del revelado—, así que la regla ni siquiera aplicaba. Ahora se dice cuál "Llamar" gobierna cada regla.
+
+**C5 — Cuatro acciones que la UI usa y §6 no listaba. → Añadidas, y la lista se parte en dos.**
+
+Faltaban "Acerca de este sitio", "Ocultar contacto", "Volver a la lista" y "Ver mapa". Se añaden las cuatro, y la fila única de acciones canónicas pasa a **dos filas** — porque C4 acababa de demostrar que la distinción importa: las **de destino** (llevan a otro lugar o comprometen) pueden tomar estilo primario; las **de revelado y vuelta** (abren o cierran algo en su lugar) nunca. "Ver contacto"/"Ocultar contacto" entran como el par que son, un solo botón con dos textos.
+
+Se documentan también **dos formas de volver**, que no son la misma: **"Volver a la lista"** es el botón de los tiles caídos, que vuelve de la vista mapa a la lista **en la misma página**; **"Volver a la lista de puntos"** es el enlace de regreso desde `/campanas`, `/acerca` y la 404, y nombra el destino porque **cambia de ruta**. La cola no es redundancia: quien está en otra página necesita saber a qué lista vuelve.
+
+**C6 — "Solo existen dos micro-transiciones". → Son cuatro, y dos no son las que §8 decía.**
+
+| | Antes (§8) | Ahora |
+|---|---|---|
+| Inventario | 2: "chip activo 120 ms, panel de mapa 150 ms, ambas `opacity/transform`" | 4: chip 120 ms `colors` · toggle mapa/lista 120 ms `colors` · flecha del riel 120 ms `transform` · panel de mapa 150 ms `opacity` (`animation`) |
+
+La afirmación estaba mal en dos ejes, no en uno: contaba dos donde hay cuatro **y** le atribuía al chip una propiedad que no usa (anima `colors`, no `opacity/transform`). **Sin impacto de accesibilidad:** la regla global de `prefers-reduced-motion` anula `transition` y `animation` con `!important` sobre `*`, así que las cuatro se eliminan estén o no inventariadas — la garantía nunca dependió de que la lista estuviera completa. Se corrige porque un documento que afirma "solo existen dos" y tiene cuatro deja de ser verificable, y §8 es la sección donde la verificabilidad **es** el contenido.
+
+**C7 — `aria-label` en el riel. → Manda el código: `title` + `sr-only`.**
+
+| | Antes (§4) | Ahora |
+|---|---|---|
+| Mitigación | "`aria-label` y `title` 'Dirección desde tu ubicación, norte arriba'" | `title` con esa frase (para quien ve la flecha) **+** `sr-only` con "a 1,2 kilómetros, dirección noreste" (para quien no la ve) |
+
+El caso más claro de §10 al revés: el documento estaba equivocado y el código, mejor. Un `aria-label` en el contenedor **habría reemplazado** el texto hablado de distancia y rumbo por la explicación de la convención — quien usa lector de pantalla se habría quedado sin el dato y con la instrucción de leer un dibujo que no ve. La convención norte-arriba no le sirve; la cardinal hablada sí. Son dos públicos y dos canales, y confundirlos habría costado justo la información que el elemento distintivo existe para dar.
+
+**C8 — "5 contactos con nombre de persona". → Son 10 personas en 10 sitios (14 entradas).**
+
+Recontado con el predicado del propio código sobre el dataset vigente. Faltaban **Gina Rodríguez, Luisa Coral, Gabriel Lozano** (los tres en dos registros de la misma fundación), **Nicole González** y **Marcelino Gaitán Villegas**. Corregido en §0 y §7.
+
+**Ningún dato quedó expuesto por este error, y la razón importa:** §7 nunca se implementó como lista de cinco nombres sino como **predicado** sobre `contacto.telefono`, así que el revelado cubría a las 10 desde el primer día. El error era del documento contándose a sí mismo. De ahí la regla nueva de §10: las cifras del dataset se recuentan, no se copian de aquí.
+
+**C9 — Marcadores de gobernanza contradictorios. → Limpiados sin borrar el histórico.**
+
+La cabecera daba por aprobados el elemento distintivo, P4 y §7, mientras tres lugares del cuerpo seguían diciendo lo contrario:
+
+| Lugar | Antes | Ahora |
+|---|---|---|
+| Cabecera | "⚠️ Pendiente de ratificación del usuario" (P4) | "✅ P4 ratificado (2026-08-17)" |
+| §4, recomendación | "→ Decisión pendiente del usuario." | "→ Aprobado por el usuario el 2026-08-14 (gate W1)" |
+| §7, título y cierre | "decisión propuesta" · "→ Decisión pendiente del usuario." | "decisión aprobada" · "→ Aprobado por el usuario el 2026-08-14 (gate W1)" |
+
+Se **convierten**, no se borran: cada marcador queda como afirmación fechada y anota que sobrevivió hasta esta revisión, con el elemento distintivo construido desde W4 y el revelado desde W2. Un documento que dice "pendiente" sobre algo que lleva semanas en producción entrena a leerse por encima, y esa es la avería que hace posibles los otros ocho hallazgos. Las fechas son las citables: 2026-08-14 para lo que aprobó el gate W1; 2026-08-17 para P4, que se ratifica **en** esta revisión y no se retrofecha.
+
+**Qué NO cambió:** los 54 tokens de §9 · las 34 razones de contraste de §1 y §5 · los 6 colores núcleo · los textos y tintes de los 4 estados · las 10 categorías · las 2 tipografías y la escala · el elemento distintivo · el layout · las 42 cadenas de microcopy que ya eran literales. **Y ninguna línea de `/web`:** esta revisión se resuelve entera del lado del documento.
 
 ### Revisión W6 — 2026-08-14 (doble auditoría, `docs/PLAN_WEB.md`)
 
