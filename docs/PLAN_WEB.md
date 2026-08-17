@@ -21,8 +21,10 @@ Plan ejecutable fase por fase para `/web`: la página estática (Next.js App Rou
 - [x] W3 — Mapa Leaflet — gate ✅ (chunk aparte con 0 refs en HTML inicial, 29/29 checks de render real, popup + Cómo llegar, conteo honesto por filtro, 109 KB first-load; 2026-08-14)
 - [x] W4 — Ubicación + distancia + privacidad UI — gate ✅ (riel de rumbo funcionando, trazado del flujo de coordenadas con barrido de aguja en runtime: DOM/URL/red/storage limpios; 4 fallos con microcopy, localStorage solo con opt-in, +2 KB → 111 KB; 2026-08-14)
 - [x] W5 — Contenido fijo + SEO/OG + headers CSP — gate ✅ (`/acerca` legible sin JS, og.png 1200×630/52 KB, metadata dentro de límites en las 3 rutas, CSP con 0 violaciones en 4 escenarios reales, delta de peso 0 KB; 2026-08-14)
-- [x] W6 — QA + auditoría de privacidad (doble GO) — gates ✅ (QA: Lighthouse móvil 100 perf en las 3 rutas, a11y 100 tras fix, 109 KB gz, matriz de 12 edge cases sin un crash · Privacidad: promesa verificada contra el build minificado; NO-GO inicial por la CSP que podía no llegar a producción → resuelto con `vercel.json` duplicado; 10 hallazgos corregidos; 2026-08-14)
+- [x] W6 — QA + auditoría de privacidad (doble GO) — gates ✅ (QA: Lighthouse móvil 99 perf en `/` y 100 en las otras dos rutas, a11y 100 tras fix, 109 KB gz, matriz de 12 edge cases sin un crash · Privacidad: promesa verificada contra el build minificado; NO-GO inicial por la CSP que podía no llegar a producción → resuelto con `vercel.json` duplicado; 10 hallazgos corregidos; 2026-08-14)
 - [x] W7a — Ship-check local ✅ **GO** (datos válidos · build limpio · 0 recursos externos · headers en ambos `vercel.json` · metadata OG completa · Lighthouse móvil 99/100/100/100) + README con la guía de deploy. Commits `6f0e528` y `1136884`.
+- [x] W8 — Aviso de frescura y rótulo del filtro de estado — gate ✅ (texto derivado del sello real, no de una constante; el filtro deja de confundirse con el horario de atención; +72 B; commit `035229a`; 2026-08-15)
+- [x] W9 — El latido: revisar ≠ cambiar — gate ✅ (`data/estado-pipeline.json` separado de los datos para no romper la idempotencia; la web distingue "revisado hoy" de "cambió hoy" y tolera que el archivo falte; 4 casos con fixtures; +2 B; commit `086762e`; 2026-08-15)
 - [ ] W7b — **Deploy real (te toca a ti):** crear el proyecto en Vercel con Root Directory `web`, fijar `SITIO_URL` con el dominio real, redeployar, y verificar con `curl -I` que los 4 headers llegaron. Pasos exactos en el `README.md` de la raíz.
 
 ## W1 — Sistema de diseño
@@ -53,7 +55,7 @@ Entregables: botón "📍 Usar mi ubicación" (solo on-tap, nunca al cargar) · 
 
 **Responsables:** `web-engineer` + `design-director` (copy). **Gate:** `out/index.html` con `lang="es"`, título ≤ 60, description ≤ 90, og:image existente 1200×630 · `vercel.json` con la CSP del contrato (base en `docs/architecture.md`/agente web) + Referrer-Policy no-referrer + X-Content-Type-Options + Permissions-Policy.
 
-Entregables: página/sección "Acerca de" (qué es, disclaimer "verifica antes de desplazarte", cómo reportar un cambio — mailto al correo del proyecto, créditos a fuentes oficiales y hoja comunitaria, atribución © OpenStreetMap contributors) · metadata español pensada para el preview chico de WhatsApp · og.png estática legible en miniatura · decisión aplicada sobre los 5 contactos personales (mostrar tal cual la fuente o solo organización — resolver con el usuario en W1/W6).
+Entregables: página/sección "Acerca de" (qué es, disclaimer "verifica antes de desplazarte", cómo reportar un cambio — mailto al correo del proyecto, créditos a fuentes oficiales y hoja comunitaria, atribución © OpenStreetMap contributors) · metadata español pensada para el preview chico de WhatsApp · og.png estática legible en miniatura · decisión aplicada sobre los contactos personales — 10 personas en 10 sitios; el «5» inicial quedó viejo al crecer el dataset (tratamiento aprobado: revelado al tocar).
 
 ## W6 — QA + auditoría (doble GO)
 

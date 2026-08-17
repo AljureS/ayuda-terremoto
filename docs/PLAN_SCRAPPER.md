@@ -24,7 +24,7 @@ Reglas de la separación: ningún import cruzado entre `/scraper` y `/web`, jam�
 
 - [x] F1 — Cimientos: scaffolding + schema + validación — gate ✅ (`npm run validate` en verde, 2026-08-12)
 - [x] F2 — Fase 0: importación del Google Sheet — gate ✅ (205 sitios, `validate` verde, `import:sheet` idempotente; 2026-08-13)
-- [x] F3 — Geocodificación con Nominatim — gate ✅ (21 exactos escritos, 0 fuera de bbox, caché versionada, idempotente; 133 para ubicar a mano → `docs/UBICAR_A_MANO.md`; 2026-08-13)
+- [x] F3 — Geocodificación con Nominatim — gate ✅ (21 exactos escritos — hoy quedan 20 tras las fusiones de F5, 0 fuera de bbox, caché versionada, idempotente; 133 para ubicar a mano → `docs/UBICAR_A_MANO.md`; 2026-08-13)
 - [x] F4 — Scrapers de fuentes oficiales — gate ✅ (4a recon → `docs/RECON_FUENTES.md` · 4b: 24 registros oficiales en staging `scraper/cache/scraped.json`, fallo-explícito probado 10/10, ética verificada; 2026-08-13)
 - [x] F5 — Dedupe + merge + pipeline completo — gate ✅ (204 sitios tras 19 fusiones + 3 netos del hub; `build:data` end-to-end, idempotente byte a byte, invariante `manual:true` probado en 5 casos; 2026-08-13)
 - [x] F6 — Auditoría de ética + documentación del scraper — gate ✅ (auditoría **GO** sin hallazgos críticos/altos, fix de Crawl-delay aplicado y verificado, README raíz con runbook probado en vivo; 2026-08-13) → **✅ SCRAPER EN FUNCIONAMIENTO**

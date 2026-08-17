@@ -55,7 +55,7 @@ Corre las 5 fases y termina con un reporte consolidado. Hoy tardó **25 segundos
 
 ```
 build:data — F5: pipeline completo (import → scrape → merge+dedupe → geocode → validar)
-  estado inicial: 204 sitios (manuales: 0)
+  estado inicial: 204 sitios (manuales: 1)
 
 FASE 1/5 · import:sheet     ← hoja comunitaria → merge (jamás toca manual:true)
 FASE 2/5 · scrape           ← fuentes oficiales → staging (all-or-nothing)
@@ -66,7 +66,7 @@ FASE 5/5 · validate         ← validación zod final
 ════════════════════════════════════════════════════════════════════════
 REPORTE CONSOLIDADO — build:data
 ════════════════════════════════════════════════════════════════════════
-TOTAL: 204 sitios (inicio: 204) · verificados: 23 · manuales: 0 · sin coordenadas: 184
+TOTAL: 204 sitios (inicio: 204) · verificados: 23 · manuales: 1 · sin coordenadas: 184
 
 NUEVOS (0):
 FUSIONADOS (22)  [id conservado ← id descartado]:
@@ -103,7 +103,7 @@ Output real cuando todo está bien:
 
 ```
 ✓ VÁLIDO
-  Sitios: 204 (manuales: 0 · sin coordenadas: 184)
+  Sitios: 204 (manuales: 1 · sin coordenadas: 184)
   Actualizado: 2026-08-13T19:16:42-05:00
 ```
 
@@ -514,7 +514,7 @@ Lo que midieron las auditorías de W6. Sirve para saber **qué estás protegiend
 
 | Medida | Valor |
 |---|---|
-| Lighthouse móvil — rendimiento | **100** en las 3 rutas |
+| Lighthouse móvil — rendimiento | **99** en `/` · **100** en `/campanas` y `/acerca` |
 | Lighthouse móvil — accesibilidad | **100** en las 3 rutas |
 | JS inicial de `/` | **112 KB** gz (presupuesto: 180 KB) — `/campanas` y `/acerca`, 106 KB |
 | Cookies · analytics · terceros | **cero** |
