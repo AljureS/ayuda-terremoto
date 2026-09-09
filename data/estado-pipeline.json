@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "ultimaRevision": "2026-09-08T09:32:56-05:00",
+  "ultimaRevision": "2026-09-09T09:36:24-05:00",
   "huboCambios": false,
   "ultimoCambio": "2026-08-14T19:16:17-05:00",
   "totalSitios": 204,
@@ -18,7 +18,7 @@
     },
     {
       "nombre": "scrape",
-      "ok": true
+      "ok": false
     },
     {
       "nombre": "merge",
@@ -33,5 +33,7 @@
       "ok": true
     }
   ],
-  "avisos": []
+  "avisos": [
+    "scrape FALLÓ (patrón roto, robots.txt o red). El pipeline continúa con el staging previo: un artículo caído no borra puntos ya conocidos. Revisar el error de arriba y actualizar el parser."
+  ]
 }
